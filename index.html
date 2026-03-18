@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMAR AI Chatbot</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css?v=17">
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <!-- Background Elements -->
+    <div class="bg-shape circle-1"></div>
+    <div class="bg-shape circle-2"></div>
+    <div class="bg-shape circle-3"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <i class='bx bx-brain'></i>
+                </div>
+                <div>
+                    <h1>SEMAR AI</h1>
+                    <p class="status"><span class="status-dot"></span> Online</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-profile-container">
+                    <div class="profile-dropdown-wrapper">
+                        <img id="user-profile-img" src="" alt="User Profile" class="hidden">
+                        <div id="logout-menu" class="hidden">
+                            <button id="logout-btn"><i class='bx bx-log-out'></i> Log out</button>
+                        </div>
+                    </div>
+                    <div id="google-login-container">
+                        <!-- Button pushed here automatically via JS -->
+                    </div>
+                </div>
+                <button id="settings-btn" class="icon-btn" title="Settings">
+                    <i class='bx bx-cog'></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Welcome Section Overlay -->
+        <div class="welcome-section" id="welcome-section">
+            <h2 id="welcome-text">Welcome to SEMAR.</h2>
+            <p>Your personal Teacher AI</p>
+        </div>
+
+        <!-- Chat Area -->
+        <main class="chat-window" id="chat-window">
+            <div class="message-list" id="message-list">
+                <!-- Messages will appear here -->
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area">
+            <form id="chat-form">
+                <textarea id="message-input" placeholder="Message SEMAR..." rows="1"></textarea>
+                <button type="submit" id="send-btn" class="send-btn">
+                    <i class='bx bx-send'></i>
+                </button>
+            </form>
+            <div class="footer-note">Information provided by SEMAR is based on data through 2024. For more recent
+                developments, additional research is recommended.</div>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>API Configuration</h2>
+                <button id="close-modal-btn" class="icon-btn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-content">
+                <p class="modal-desc">API Connection configured.</p>
+                <div class="form-group">
+                    <label for="model-name">Model Name</label>
+                    <select id="model-name" required>
+                        <option value="">Loading models...</option>
+                    </select>
+                </div>
+                <button id="save-settings-btn" class="primary-btn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js?v=17"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+
+</html>
