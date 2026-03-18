@@ -776,8 +776,102 @@ body.chat-active .circle-3 {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-    .chat-header h1 { font-size: 1rem; }
-    .welcome-section h2 { font-size: 1.8rem; }
-    #chat-form { border-radius: 20px; }
+@media (max-width: 768px) {
+    /* Header Polish */
+    .chat-header {
+        padding: 0.6rem 1rem;
+    }
+    .logo-container {
+        width: 28px;
+        height: 28px;
+        font-size: 1.1rem;
+    }
+    .chat-header h1 { 
+        font-size: 1rem; 
+    }
+    #user-profile-img {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        top: 12vh;
+    }
+    .welcome-section h2 { 
+        font-size: 1.6rem; 
+        margin-bottom: 0.5rem;
+    }
+    .welcome-section p {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Chat Content */
+    .message-list {
+        padding: 1.2rem 0.8rem 90px 0.8rem;
+        gap: 1.2rem;
+    }
+    .msg-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 0.9rem;
+    }
+    .msg-content {
+        font-size: 0.95rem;
+    }
+    .user .msg-content {
+        padding: 0.6rem 1rem;
+        border-radius: 16px;
+        border-bottom-right-radius: 4px;
+    }
+    .ai .msg-content pre {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Input Area */
+    .chat-input-area {
+        padding: 0.5rem 0.8rem 1rem 0.8rem;
+    }
+    .app-container:not(.chat-started) .chat-input-area {
+        transform: translateY(calc(-35vh + 3rem));
+    }
+    #chat-form { 
+        border-radius: 20px; 
+        padding: 0.4rem 0.4rem 0.4rem 1rem;
+    }
+    #message-input {
+        font-size: 0.95rem;
+        padding: 0.5rem 0;
+    }
+    .send-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 1.1rem;
+    }
+    .footer-note {
+        font-size: 0.65rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+        padding: 0 0.5rem;
+    }
+
+    /* Modal */
+    .modal {
+        padding: 1.5rem;
+        width: 95%;
+        border-radius: 12px;
+    }
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+    .form-group input, .form-group select {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.95rem;
+    }
+    .primary-btn {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+    }
 }
