@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let config = {
-        apiUrl: localStorage.getItem('semar_api_url') || 'https://subjects-prospective-statewide-solid.trycloudflare.com',
+        apiUrl: localStorage.getItem('semar_api_url') || 'https://intellectual-sorted-ideas-relations.trycloudflare.com',
         modelName: localStorage.getItem('semar_model_name') || 'semar:latest'
     };
     let chatHistory = [];
@@ -205,10 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add loading indicator
         const loadingId = addLoadingIndicator();
-        
+
         // Always force scroll at the start of a new message
-        isUserScrolledUp = false; 
-        
+        isUserScrolledUp = false;
+
         currentAbortController = new AbortController();
         setGeneratingState(true);
 
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (loadingEl) {
                     loadingEl.remove();
                     // create empty message box
-                    aiMsgBox = addMessage('', 'ai', false, true); 
+                    aiMsgBox = addMessage('', 'ai', false, true);
                 }
                 if (aiMsgBox) {
                     currentAiText += chunkText;
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('API Error:', error);
             const loadEl = document.getElementById(loadingId);
             if (loadEl) loadEl.remove();
-            
+
             if (error.name === 'AbortError') {
                 addMessage('*(Generation Stopped)*', 'ai', false, true);
             } else {
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = `msg-content ${isError ? 'error' : ''}`;
-        
+
         if (isHtml) {
             contentDiv.innerHTML = text;
         } else {
@@ -397,13 +397,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedName && savedPic) {
             const welcomeText = document.getElementById('welcome-text');
             if (welcomeText) welcomeText.textContent = 'Welcome back, ' + savedName + '!';
-            
+
             const profileImg = document.getElementById('user-profile-img');
             if (profileImg) {
                 profileImg.src = savedPic;
                 profileImg.classList.remove('hidden');
             }
-            
+
             const loginContainer = document.getElementById('google-login-container');
             if (loginContainer) loginContainer.classList.add('hidden');
         }
@@ -446,35 +446,35 @@ document.addEventListener('DOMContentLoaded', () => {
 function decodeJwtResponse(token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
     return JSON.parse(jsonPayload);
 }
 
 // Global callback for Google Login
-window.handleCredentialResponse = function(response) {
+window.handleCredentialResponse = function (response) {
     const responsePayload = decodeJwtResponse(response.credential);
     const userName = responsePayload.name;
     const userPicture = responsePayload.picture;
-    
+
     // Save to local storage
     localStorage.setItem('semar_user_name', userName);
     localStorage.setItem('semar_user_pic', userPicture);
-    
+
     // Update welcome message
     const welcomeText = document.getElementById('welcome-text');
     if (welcomeText) {
         welcomeText.textContent = 'Welcome back, ' + userName + '!';
     }
-    
+
     // Update profile image
     const profileImg = document.getElementById('user-profile-img');
     if (profileImg) {
         profileImg.src = userPicture;
         profileImg.classList.remove('hidden');
     }
-    
+
     // Hide login button
     const loginContainer = document.getElementById('google-login-container');
     if (loginContainer) {
@@ -488,7 +488,7 @@ window.onload = function () {
         client_id: "884444108567-k7n8527kckobjcdj1fdr8kob4d961qnl.apps.googleusercontent.com",
         callback: window.handleCredentialResponse
     });
-    
+
     const loginContainer = document.getElementById('google-login-container');
     if (loginContainer && !localStorage.getItem('semar_user_name')) {
         google.accounts.id.renderButton(
