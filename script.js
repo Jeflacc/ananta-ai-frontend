@@ -7,6 +7,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Helper to render markdown and protect math from being mangled by marked
+    function renderMarkdownWithMath(text) {
+        if (!text) return '';
+        
+        let mathBlocks = [];
+        
+        // 1. Substitute block math: $$ ... $$ and \[ ... \]
+        let processed = text.replace(/(\$\$|\\\[)([\s\S]*?)(\$\$|\\\])/g, (match, open, math) => {
+            mathBlocks.push({ math: math, display: true });
+            return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+        });
+        
+        // 2. Substitute inline math: $ ... $ and \( ... \)
+        processed = processed.replace(/(\$|\\\()([\s\S]*?)(\$|\\\))/g, (match, open, math) => {
+            mathBlocks.push({ math: math, display: false });
+            return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+        });
+        
+        // 3. Parse markdown
+        let html = typeof marked !== 'undefined' ? marked.parse(processed) : processed;
+        
+        // 4. Restore and render KaTeX
+        mathBlocks.forEach((block, i) => {
+            let rendered = '';
+            if (window.katex) {
+                try {
+                    rendered = katex.renderToString(block.math, {
+                        displayMode: block.display,
+                        throwOnError: false
+                    });
+                } catch(e) {
+                    rendered = block.display ? `$$${block.math}$$` : `$${block.math}$`;
+                }
+            } else {
+                rendered = block.display ? `$$${block.math}$$` : `$${block.math}$`;
+            }
+            html = html.replace(`@@MATH_BLOCK_${i}@@`, rendered);
+        });
+        
+        return html;
+    }
+
     // DOM Elements
     const chatWindow = document.getElementById('chat-window');
     const messageList = document.getElementById('message-list');
@@ -241,8 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (aiMsgBox) {
                     currentAiText += chunkText;
-                    // Parse markdown to HTML
-                    aiMsgBox.contentDiv.innerHTML = marked.parse(currentAiText);
+                    aiMsgBox.contentDiv.innerHTML = renderMarkdownWithMath(currentAiText);
                     scrollToBottom();
                 }
             }, currentAbortController.signal);
@@ -250,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!aiMsgBox) {
                 // fallback if no chunks streamed
                 document.getElementById(loadingId).remove();
-                addMessage(marked.parse(responseText), 'ai', false, true);
+                addMessage(renderMarkdownWithMath(responseText), 'ai', false, true);
             }
 
             chatHistory.push({ role: 'assistant', content: responseText });
