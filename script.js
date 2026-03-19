@@ -95,10 +95,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.models && data.models.length > 0) {
                 modelNameInput.innerHTML = '';
                 let foundConfigModel = false;
+                let semarModelsFound = false;
+
                 data.models.forEach(m => {
+                    if (!m.name.toLowerCase().includes('semar')) return;
+
+                    semarModelsFound = true;
                     const opt = document.createElement('option');
                     opt.value = m.name;
-                    opt.textContent = m.name;
+                    
+                    // Format display name: e.g. "semar-edu:latest" -> "Semar Edu"
+                    let displayName = m.name.split(':')[0];
+                    displayName = displayName.split('-').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ');
+                    
+                    opt.textContent = displayName;
+
                     if (m.name === config.modelName) {
                         opt.selected = true;
                         foundConfigModel = true;
@@ -106,9 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     modelNameInput.appendChild(opt);
                 });
 
-                // If no model was selected, or selected model is missing, pick the first one
-                if (!foundConfigModel) {
-                    config.modelName = data.models[0].name;
+                if (!semarModelsFound) {
+                    modelNameInput.innerHTML = '<option value="">No SEMAR models found</option>';
+                } else if (!foundConfigModel && modelNameInput.options.length > 0) {
+                    config.modelName = modelNameInput.options[0].value;
                     localStorage.setItem('semar_model_name', config.modelName);
                     modelNameInput.value = config.modelName;
                 }
