@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let config = {
-        apiUrl: (typeof CONFIG !== 'undefined' && CONFIG.API_URL) ? CONFIG.API_URL : 'https://criterion-implied-rainbow-connected.trycloudflare.com',
+        apiUrl: (typeof CONFIG !== 'undefined' && CONFIG.API_URL) ? CONFIG.API_URL : 'https://lan-louis-teeth-shelter.trycloudflare.com',
         modelName: localStorage.getItem('semar_model_name') || 'semar:latest'
     };
     let chatHistory = [];
