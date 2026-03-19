@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let config = {
-        apiUrl: localStorage.getItem('semar_api_url') || 'https://f777-2402-8780-106a-13d1-e8b3-115a-4c0-205e.ngrok-free.app',
+        apiUrl: localStorage.getItem('semar_api_url') || 'https://subjects-prospective-statewide-solid.trycloudflare.com',
         modelName: localStorage.getItem('semar_model_name') || 'semar:latest'
     };
     let chatHistory = [];
