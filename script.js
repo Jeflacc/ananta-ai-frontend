@@ -393,10 +393,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Ollama API ──────────────────────────────────────────────────────────
     async function fetchOllama(messages, onChunk, signal) {
         let endpoint = `${config.dbApiUrl}/api/chat/ollama`;
+        const payloadMessages = [
+            ...(typeof CONFIG !== 'undefined' && CONFIG.SYSTEM_PROMPT ? [{ role: 'system', content: CONFIG.SYSTEM_PROMPT }] : []),
+            ...messages
+        ];
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('ananta_token') || ''}` },
-            body: JSON.stringify({ model: config.modelName, messages, stream: true }),
+            body: JSON.stringify({ model: config.modelName, messages: payloadMessages, stream: true }),
             signal
         });
         if (!response.ok) {
@@ -436,12 +440,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Cerebras API (OpenAI-compatible) ────────────────────────────────────
     async function fetchCerebras(modelId, messages, onChunk, signal) {
         const url = `${config.dbApiUrl}/api/chat/cerebras`;
+        const payloadMessages = [
+            ...(typeof CONFIG !== 'undefined' && CONFIG.SYSTEM_PROMPT ? [{ role: 'system', content: CONFIG.SYSTEM_PROMPT }] : []),
+            ...messages.map(m => ({ role: m.role, content: m.content }))
+        ];
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('ananta_token') || ''}` },
             body: JSON.stringify({
                 model: modelId,
-                messages: messages.map(m => ({ role: m.role, content: m.content })),
+                messages: payloadMessages,
                 stream: true
             }),
             signal
