@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Config ──────────────────────────────────────────────────────────────
     const config = {
         dbApiUrl:       (typeof CONFIG !== 'undefined' && CONFIG.DB_API_URL)       ? CONFIG.DB_API_URL       : 'http://localhost:3000',
-        cerebrasModels: (typeof CONFIG !== 'undefined' && CONFIG.CEREBRAS_MODELS)  ? CONFIG.CEREBRAS_MODELS  : [],
         modelName:      localStorage.getItem('ananta_model_name') || 'semar:latest'
     };
 
@@ -113,8 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.cerebrasGroup.innerHTML = '';
 
         try {
-            const res  = await fetch(`${config.dbApiUrl}/api/tags`);
-            const data = await res.json();
+            const [tagsRes, modelsRes] = await Promise.all([
+                fetch(`${config.dbApiUrl}/api/tags`).catch(() => ({ json: () => ({ models: [] }) })),
+                fetch(`${config.dbApiUrl}/api/models`).catch(() => ({ json: () => ({ cerebras: [], gemini: [] }) }))
+            ]);
+            
+            const data = await tagsRes.json();
             const semarModels = (data.models || []).filter(m => m.name.toLowerCase().includes('semar'));
             if (semarModels.length > 0) {
                 semarModels.forEach(m => {
@@ -124,15 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 renderModelCard(dom.semarGroup, '🤖', 'SEMAR AI', 'ollama::semar:latest');
             }
+
+            const extraModels = await modelsRes.json();
+            
+            // Fill Cerebras group
+            if (extraModels.cerebras && extraModels.cerebras.length > 0) {
+                extraModels.cerebras.forEach(m => {
+                    renderModelCard(dom.cerebrasGroup, '⚡', m.name, `cerebras::${m.id}`);
+                });
+            }
         } catch {
             renderModelCard(dom.semarGroup, '🤖', 'SEMAR AI (offline)', 'ollama::semar:latest');
-        }
-
-        // Fill Cerebras group
-        if (config.cerebrasModels.length > 0) {
-            config.cerebrasModels.forEach(m => {
-                renderModelCard(dom.cerebrasGroup, '⚡', m.name, `cerebras::${m.id}`);
-            });
         }
     }
 
@@ -248,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Determine provider from value format: "prefix::id"
             const [providerType, modelId] = activeProvider.split('::');
             const isCerebras = providerType === 'cerebras';
-            const isGemini   = providerType === 'gemini';
 
             if (providerType === 'ollama') {
                 // Temporarily set the Ollama model name
@@ -276,10 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         scrollToBottom();
                     }
                 }, currentAbortController.signal);
-            } else {
-                responseText = await fetchGemini(modelId, chatHistory, currentAbortController.signal);
-                if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                aiMsgBox = appendMessage('assistant', renderMarkdownWithMath(responseText), false, true);
             }
 
             if (!aiMsgBox) {
@@ -479,30 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         return fullResponse;
-    }
-
-    async function fetchGemini(modelId, messages, signal) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${config.geminiKey}`;
-
-        const contents = messages.map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }]
-        }));
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents }),
-            signal
-        });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData?.error?.message || `Gemini error ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '(No response from Gemini)';
     }
 
     // ── Chat History Save ───────────────────────────────────────────────────
