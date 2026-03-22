@@ -276,6 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loadEl) loadEl.remove();
             if (error.name === 'AbortError') {
                 appendMessage('assistant', '*(Generation Stopped)*', false, true);
+            } else if (error.message === 'login_required') {
+                chatHistory.pop(); // silently discard — popup already shown
             } else {
                 appendMessage('assistant', '⚠️ Error: ' + error.message, true, false);
                 chatHistory.pop();
@@ -286,6 +288,49 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.messageInput.focus();
         }
     });
+
+    // ── Login Required Popup ────────────────────────────────────────────────
+    function showLoginRequiredPopup() {
+        const existing = document.getElementById('login-required-popup');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'login-required-popup';
+        popup.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+            animation: fadeIn 0.2s ease;
+        `;
+        popup.innerHTML = `
+            <div style="
+                background: var(--glass-bg, rgba(20,20,30,0.95));
+                border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+                border-radius: 20px; padding: 32px 28px;
+                max-width: 380px; width: 90%; text-align: center;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            ">
+                <div style="font-size:2.5rem; margin-bottom:12px;">🔐</div>
+                <h3 style="font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:700; color:var(--text-primary,#fff); margin:0 0 10px;">Login Required</h3>
+                <p style="color:var(--text-secondary,#aaa); font-size:0.9rem; margin:0 0 24px; line-height:1.5;">You need to be <strong style="color:var(--primary-color,#00e5ff);">signed in</strong> to use AI models. Please log in to continue.</p>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button onclick="document.getElementById('login-required-popup').remove()" style="
+                        padding:10px 20px; border-radius:10px; border:1px solid var(--border-color,rgba(255,255,255,0.15));
+                        background:transparent; color:var(--text-secondary,#aaa); cursor:pointer;
+                        font-family:'Inter',sans-serif; font-size:0.9rem;
+                    ">Dismiss</button>
+                    <a href="login.html" style="
+                        padding:10px 20px; border-radius:10px; border:none;
+                        background:var(--primary-color,#00e5ff); color:#000; font-weight:700;
+                        text-decoration:none; cursor:pointer; font-family:'Inter',sans-serif;
+                        font-size:0.9rem; display:inline-flex; align-items:center;
+                    ">Sign In →</a>
+                </div>
+            </div>
+        `;
+        popup.addEventListener('click', (e) => { if (e.target === popup) popup.remove(); });
+        document.body.appendChild(popup);
+    }
 
     // ── Message Rendering ───────────────────────────────────────────────────
     function appendMessage(sender, text, isError = false, isHtml = false) {
@@ -334,7 +379,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ model: config.modelName, messages, stream: true }),
             signal
         });
-        if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
+        if (!response.ok) {
+            if (response.status === 401) { showLoginRequiredPopup(); throw new Error('login_required'); }
+            throw new Error(`Ollama error: ${response.status}`);
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -379,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             signal
         });
         if (!response.ok) {
+            if (response.status === 401) { showLoginRequiredPopup(); throw new Error('login_required'); }
             const err = await response.json().catch(() => ({}));
             throw new Error(err?.error?.message || `Cerebras error ${response.status}`);
         }
