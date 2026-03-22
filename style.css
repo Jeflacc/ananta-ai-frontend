@@ -38,7 +38,7 @@ body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     overflow: hidden;
-    height: 100vh;
+    height: 100dvh;
 }
 
 /* Background Dynamic Google-Style Orbs */
@@ -139,7 +139,7 @@ body.chat-active .circle-3 {
 .app-layout {
     display: flex;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     position: relative;
     z-index: 1;
@@ -397,6 +397,7 @@ body.chat-active .circle-3 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overscroll-behavior: contain; /* prevents page bounce while scrolling messages */
 }
 
 /* Custom Scrollbar */
@@ -929,6 +930,13 @@ body.chat-active .circle-3 {
     max-height: 200px;
     min-height: 24px;
     line-height: 1.5;
+    overflow-y: hidden; /* JS controls height, no internal scroll */
+    overscroll-behavior: contain;
+}
+
+/* Hide the textarea scrollbar completely — it auto-expands instead */
+#message-input::-webkit-scrollbar {
+    display: none;
 }
 
 #message-input::placeholder {

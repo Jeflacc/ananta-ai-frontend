@@ -179,8 +179,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Input resize ────────────────────────────────────────────────────────
     dom.messageInput.addEventListener('input', function () {
         this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
+        const maxH = window.innerWidth <= 768 ? 120 : 200;
+        this.style.height = Math.min(this.scrollHeight, maxH) + 'px';
+        this.style.overflowY = this.scrollHeight > maxH ? 'auto' : 'hidden';
         dom.sendBtn.disabled = this.value.trim() === '' && !isGenerating;
+    });
+
+    // Scroll input into view when keyboard opens on mobile
+    dom.messageInput.addEventListener('focus', () => {
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                dom.messageInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 350); // delay lets the keyboard fully open first
+        }
+    });
+
+    // Also react to keyboard closing/opening (causes window resize on Android)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768 && document.activeElement === dom.messageInput) {
+            setTimeout(() => {
+                dom.messageInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+        }
     });
 
     dom.messageInput.addEventListener('keydown', (e) => {
@@ -285,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             setGeneratingState(false);
             currentAbortController = null;
-            dom.messageInput.focus();
+            if (window.innerWidth > 768) dom.messageInput.focus();
         }
     });
 

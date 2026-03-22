@@ -17,16 +17,20 @@
     
     <style>
         /* Auth specific overrides */
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: var(--bg-main);
-            overflow: hidden;
-            position: relative;
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+        }
+        body {
+            display: flex;
+            align-items: flex-start;  /* don't center — allow natural scroll */
+            justify-content: center;
+            min-height: 100dvh;
+            background: var(--bg-main);
+            overflow-y: auto;   /* let it scroll when keyboard opens */
+            position: relative;
+            padding: 24px 0 40px;   /* breathing room top + bottom */
         }
         
         /* Background Glows */
