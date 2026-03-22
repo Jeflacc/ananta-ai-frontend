@@ -1,43 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Configure Marked.js
     if (typeof marked !== 'undefined') {
-        marked.setOptions({
-            breaks: true,
-            gfm: true
-        });
+        marked.setOptions({ breaks: true, gfm: true });
     }
 
-    // Helper to render markdown and protect math from being mangled by marked
+    // ── Markdown + Math Renderer ────────────────────────────────────────────
     function renderMarkdownWithMath(text) {
         if (!text) return '';
-        
         let mathBlocks = [];
-        
-        // 1. Substitute block math: $$ ... $$ and \[ ... \]
-        let processed = text.replace(/(\$\$|\\\[)([\s\S]*?)(\$\$|\\\])/g, (match, open, math) => {
-            mathBlocks.push({ math: math, display: true });
+        let processed = text.replace(/(\$\$|\\\[)([\s\S]*?)(\$\$|\\\])/g, (_, open, math) => {
+            mathBlocks.push({ math, display: true });
             return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
         });
-        
-        // 2. Substitute inline math: $ ... $ and \( ... \)
-        processed = processed.replace(/(\$|\\\()([\s\S]*?)(\$|\\\))/g, (match, open, math) => {
-            mathBlocks.push({ math: math, display: false });
+        processed = processed.replace(/(\$|\\\()([\s\S]*?)(\$|\\\))/g, (_, open, math) => {
+            mathBlocks.push({ math, display: false });
             return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
         });
-        
-        // 3. Parse markdown
         let html = typeof marked !== 'undefined' ? marked.parse(processed) : processed;
-        
-        // 4. Restore and render KaTeX
         mathBlocks.forEach((block, i) => {
             let rendered = '';
             if (window.katex) {
                 try {
-                    rendered = katex.renderToString(block.math, {
-                        displayMode: block.display,
-                        throwOnError: false
-                    });
-                } catch(e) {
+                    rendered = katex.renderToString(block.math, { displayMode: block.display, throwOnError: false });
+                } catch (e) {
                     rendered = block.display ? `$$${block.math}$$` : `$${block.math}$`;
                 }
             } else {
@@ -45,277 +30,265 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             html = html.replace(`@@MATH_BLOCK_${i}@@`, rendered);
         });
-        
         return html;
     }
 
-    // DOM Elements
-    const chatWindow = document.getElementById('chat-window');
-    const messageList = document.getElementById('message-list');
-    const welcomeSection = document.getElementById('welcome-section');
-    const chatForm = document.getElementById('chat-form');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-
-    // Settings Elements
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const saveSettingsBtn = document.getElementById('save-settings-btn');
-    const modelNameInput = document.getElementById('model-name');
-
-    // State
-    let config = {
-        apiUrl: (typeof CONFIG !== 'undefined' && CONFIG.API_URL) ? CONFIG.API_URL : 'https://lan-louis-teeth-shelter.trycloudflare.com',
-        modelName: localStorage.getItem('semar_model_name') || 'semar:latest'
+    // ── DOM References ──────────────────────────────────────────────────────
+    const dom = {
+        chatWindow: document.getElementById('chat-window'),
+        messageList: document.getElementById('message-list'),
+        welcomeSection: document.getElementById('welcome-section'),
+        sidebar: document.getElementById('sidebar'),
+        sidebarToggle: document.getElementById('sidebar-toggle'),
+        sidebarToggleClose: document.getElementById('sidebar-toggle-close'),
+        newChatBtn: document.getElementById('new-chat-btn'),
+        conversationList: document.getElementById('conversation-list'),
+        userInfoSidebar: document.getElementById('user-info-sidebar'),
+        userAvatarSidebar: document.getElementById('user-avatar-sidebar'),
+        usernameSidebar: document.getElementById('username-sidebar'),
+        chatForm: document.getElementById('chat-form'),
+        messageInput: document.getElementById('message-input'),
+        sendBtn: document.getElementById('send-btn'),
+        settingsBtn: document.getElementById('settings-btn'),
+        settingsModal: document.getElementById('settings-modal'),
+        closeModalBtn: document.getElementById('close-modal-btn'),
+        saveSettingsBtn: document.getElementById('save-settings-btn'),
+        providerSelect: document.getElementById('provider-select'),
+        semarGroup: document.getElementById('semar-card-list'),
+        cerebrasGroup: document.getElementById('cerebras-card-list'),
+        userProfileImg: document.getElementById('user-profile-img'),
+        loginContainer: document.getElementById('login-container'),
+        logoutMenu: document.getElementById('logout-menu'),
+        logoutBtn: document.getElementById('logout-btn'),
+        profileDropdownWrapper: document.querySelector('.profile-dropdown-wrapper'),
+        appContainer: document.querySelector('.app-container')
     };
-    let chatHistory = [];
 
-    // UI State for smart scrolling and generation
-    let isGenerating = false;
+    // ── Config ──────────────────────────────────────────────────────────────
+    const config = {
+        dbApiUrl:       (typeof CONFIG !== 'undefined' && CONFIG.DB_API_URL)       ? CONFIG.DB_API_URL       : 'http://localhost:3000',
+        cerebrasModels: (typeof CONFIG !== 'undefined' && CONFIG.CEREBRAS_MODELS)  ? CONFIG.CEREBRAS_MODELS  : [],
+        modelName:      localStorage.getItem('ananta_model_name') || 'semar:latest'
+    };
+
+    // ── State ───────────────────────────────────────────────────────────────
+    let conversationId = null;
+    let isSidebarOpen  = true;
+    let chatHistory    = [];
+    let isGenerating   = false;
     let currentAbortController = null;
-    let isUserScrolledUp = false;
+    let isUserScrolledUp       = false;
 
-    // Detect if user scrolled up
-    chatWindow.addEventListener('scroll', () => {
-        // If the user's scroll position is > 50px away from the bottom, consider them scrolled up
-        const maxScrollTop = chatWindow.scrollHeight - chatWindow.clientHeight;
-        isUserScrolledUp = (maxScrollTop - chatWindow.scrollTop) > 50;
+    // activeProvider holds the currently selected model
+    let activeProvider = localStorage.getItem('ananta_active_provider') || 'cerebras::llama3.1-8b';
+
+    // ── Settings: populate model cards on open ──────────────────────────────
+    let pendingProviderSelection = activeProvider;
+
+    function renderModelCard(container, icon, name, value) {
+        const card = document.createElement('div');
+        card.className = `model-card ${pendingProviderSelection === value ? 'selected' : ''}`;
+        card.dataset.value = value;
+        card.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span>${icon}</span>
+                <span>${name}</span>
+            </div>
+            <div class="mc-dot"></div>
+        `;
+        card.addEventListener('click', () => {
+            pendingProviderSelection = value;
+            // Update UI selection state within the modal
+            document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+        });
+        container.appendChild(card);
+    }
+
+    async function populateProviderSelect() {
+        if (!dom.semarGroup) return;
+
+        pendingProviderSelection = activeProvider; // reset to actual active when opening modal
+        dom.semarGroup.innerHTML = '';
+        dom.cerebrasGroup.innerHTML = '';
+
+        try {
+            const res  = await fetch(`${config.dbApiUrl}/api/tags`);
+            const data = await res.json();
+            const semarModels = (data.models || []).filter(m => m.name.toLowerCase().includes('semar'));
+            if (semarModels.length > 0) {
+                semarModels.forEach(m => {
+                    const label = m.name.replace(':latest','').split('-').map(p => p[0].toUpperCase()+p.slice(1)).join(' ');
+                    renderModelCard(dom.semarGroup, '🤖', label, `ollama::${m.name}`);
+                });
+            } else {
+                renderModelCard(dom.semarGroup, '🤖', 'SEMAR AI', 'ollama::semar:latest');
+            }
+        } catch {
+            renderModelCard(dom.semarGroup, '🤖', 'SEMAR AI (offline)', 'ollama::semar:latest');
+        }
+
+        // Fill Cerebras group
+        if (config.cerebrasModels.length > 0) {
+            config.cerebrasModels.forEach(m => {
+                renderModelCard(dom.cerebrasGroup, '⚡', m.name, `cerebras::${m.id}`);
+            });
+        }
+    }
+
+    dom.settingsBtn.addEventListener('click', () => {
+        dom.settingsModal.classList.remove('hidden');
+        populateProviderSelect();
+    });
+    dom.closeModalBtn.addEventListener('click', () => dom.settingsModal.classList.add('hidden'));
+    dom.settingsModal.addEventListener('click', (e) => { if (e.target === dom.settingsModal) dom.settingsModal.classList.add('hidden'); });
+    
+    dom.saveSettingsBtn.addEventListener('click', () => {
+        activeProvider = pendingProviderSelection;
+        localStorage.setItem('ananta_active_provider', activeProvider);
+        dom.settingsModal.classList.add('hidden');
     });
 
+
+    // ── Auto-scroll ─────────────────────────────────────────────────────────
+    dom.chatWindow.addEventListener('scroll', () => {
+        const maxScrollTop = dom.chatWindow.scrollHeight - dom.chatWindow.clientHeight;
+        isUserScrolledUp = (maxScrollTop - dom.chatWindow.scrollTop) > 50;
+    });
+
+    function scrollToBottom(force = false) {
+        if (!isUserScrolledUp || force) {
+            dom.chatWindow.scrollTo({ top: dom.chatWindow.scrollHeight, behavior: force ? 'smooth' : 'auto' });
+        }
+    }
+
+    // ── Generate State ──────────────────────────────────────────────────────
     function setGeneratingState(generating) {
         isGenerating = generating;
         if (generating) {
-            sendBtn.innerHTML = "<i class='bx bx-stop'></i>";
-            sendBtn.classList.add('stop-btn');
-            sendBtn.disabled = false; // Ensure click works to stop
+            dom.sendBtn.innerHTML = "<i class='bx bx-stop'></i>";
+            dom.sendBtn.classList.add('stop-btn');
+            dom.sendBtn.disabled = false;
         } else {
-            sendBtn.innerHTML = "<i class='bx bx-send'></i>";
-            sendBtn.classList.remove('stop-btn');
-            sendBtn.disabled = messageInput.value.trim() === '';
+            dom.sendBtn.innerHTML = "<i class='bx bx-send'></i>";
+            dom.sendBtn.classList.remove('stop-btn');
+            dom.sendBtn.disabled = dom.messageInput.value.trim() === '';
         }
     }
 
-    // Auto-resize textarea
-    messageInput.addEventListener('input', function () {
+    // ── Input resize ────────────────────────────────────────────────────────
+    dom.messageInput.addEventListener('input', function () {
         this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-        if (this.value.trim() === '') {
-            if (!isGenerating) sendBtn.disabled = true;
-        } else {
-            sendBtn.disabled = false;
-        }
+        this.style.height = this.scrollHeight + 'px';
+        dom.sendBtn.disabled = this.value.trim() === '' && !isGenerating;
     });
 
-    // Handle Enter key to send (Shift+Enter for temp new line)
-    messageInput.addEventListener('keydown', (e) => {
+    dom.messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (messageInput.value.trim() !== '') {
-                chatForm.dispatchEvent(new Event('submit'));
-            }
+            if (dom.messageInput.value.trim() !== '') dom.chatForm.dispatchEvent(new Event('submit'));
         }
     });
 
-    // Fetch Models Logic
-    async function fetchModels(apiUrl) {
-        if (!apiUrl) return;
+    
 
-        let endpoint = apiUrl;
-        if (endpoint.endsWith('/api/chat')) endpoint = endpoint.replace('/api/chat', '');
-        else if (endpoint.endsWith('/api/generate')) endpoint = endpoint.replace('/api/generate', '');
-        else if (endpoint.endsWith('/')) endpoint = endpoint.slice(0, -1);
-
-        const tagsEndpoint = `${endpoint}/api/tags`;
-
-        try {
-            modelNameInput.innerHTML = '<option value="">Loading models...</option>';
-            const response = await fetch(tagsEndpoint);
-            if (!response.ok) throw new Error('Failed to load models');
-            const data = await response.json();
-
-            if (data.models && data.models.length > 0) {
-                modelNameInput.innerHTML = '';
-                let foundConfigModel = false;
-                let semarModelsFound = false;
-
-                data.models.forEach(m => {
-                    if (!m.name.toLowerCase().includes('semar')) return;
-
-                    semarModelsFound = true;
-                    const opt = document.createElement('option');
-                    opt.value = m.name;
-                    
-                    // Format display name: e.g. "semar-edu:latest" -> "Semar Edu"
-                    let displayName = m.name.split(':')[0];
-                    displayName = displayName.split('-').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                    ).join(' ');
-                    
-                    opt.textContent = displayName;
-
-                    if (m.name === config.modelName) {
-                        opt.selected = true;
-                        foundConfigModel = true;
-                    }
-                    modelNameInput.appendChild(opt);
-                });
-
-                if (!semarModelsFound) {
-                    modelNameInput.innerHTML = '<option value="">No SEMAR models found</option>';
-                } else if (!foundConfigModel && modelNameInput.options.length > 0) {
-                    config.modelName = modelNameInput.options[0].value;
-                    localStorage.setItem('semar_model_name', config.modelName);
-                    modelNameInput.value = config.modelName;
-                }
-            } else {
-                modelNameInput.innerHTML = '<option value="">No models found</option>';
-            }
-        } catch (e) {
-            console.error('Fetch Models Error:', e);
-            modelNameInput.innerHTML = '<option value="">Error fetching models</option>';
-        }
-    }
-
-    // Modal Logic
-    const openModal = () => {
-        settingsModal.classList.remove('hidden');
-        if (config.apiUrl) {
-            fetchModels(config.apiUrl);
-        }
-    };
-    const closeModal = () => settingsModal.classList.add('hidden');
-
-    settingsBtn.addEventListener('click', openModal);
-
-    // Initial fetch if we have an API URL
-    if (config.apiUrl) {
-        fetchModels(config.apiUrl);
-    }
-    closeModalBtn.addEventListener('click', closeModal);
-
-    // Close modal if clicking outside
-    settingsModal.addEventListener('click', (e) => {
-        if (e.target === settingsModal) closeModal();
-    });
-
-    saveSettingsBtn.addEventListener('click', () => {
-        const model = modelNameInput.value;
-
-        if (!model) {
-            alert('Please select a model.');
-            return;
-        }
-
-        config.modelName = model;
-        localStorage.setItem('semar_model_name', model);
-
-        closeModal();
-    });
-
-    // Ensure initial check
-    if (!config.apiUrl) {
-        // Automatically open settings if no API URL is configured initially
-        setTimeout(() => openModal(), 1000);
-    }
-
-    // Chat Logic
-    chatForm.addEventListener('submit', async (e) => {
+    // ── Chat Submit ─────────────────────────────────────────────────────────
+    dom.chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         if (isGenerating) {
-            if (currentAbortController) {
-                currentAbortController.abort();
-            }
+            currentAbortController && currentAbortController.abort();
             return;
         }
 
-        const text = messageInput.value.trim();
+        const text = dom.messageInput.value.trim();
         if (!text) return;
 
-        // Make background focus out after the first message
-        if (!document.body.classList.contains('chat-active')) {
-            document.body.classList.add('chat-active');
-        }
+        // First message — lock in the provider and hide the picker
+        document.body.classList.add('chat-active');
+        dom.appContainer.classList.add('chat-started');
 
-        if (!config.apiUrl) {
-            alert('Please configure the API URL in settings first.');
-            openModal();
-            return;
-        }
+        dom.messageInput.value = '';
+        dom.messageInput.style.height = 'auto';
+        dom.sendBtn.disabled = true;
 
-        // Add chat-started class to document container to trigger CSS animations
-        const appContainer = document.querySelector('.app-container');
-        if (!appContainer.classList.contains('chat-started')) {
-            appContainer.classList.add('chat-started');
-        }
-
-        // Reset input
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
-        sendBtn.disabled = true;
-
-        // Add user message
-        addMessage(text, 'user');
+        appendMessage('user', text, false, false);
         chatHistory.push({ role: 'user', content: text });
+        saveChatMessage('user', text);
 
-        // Add loading indicator
-        const loadingId = addLoadingIndicator();
-
-        // Always force scroll at the start of a new message
-        isUserScrolledUp = false;
-
-        currentAbortController = new AbortController();
         setGeneratingState(true);
+        const loadingId = addLoadingIndicator();
+        currentAbortController = new AbortController();
+
+        let aiMsgBox = null;
+        let currentAiText = '';
+        let responseText = '';
 
         try {
-            // Call Ollama API
-            let aiMsgBox = null;
-            let currentAiText = '';
+            // Determine provider from value format: "prefix::id"
+            const [providerType, modelId] = activeProvider.split('::');
+            const isCerebras = providerType === 'cerebras';
+            const isGemini   = providerType === 'gemini';
 
-            const responseText = await fetchOllama(chatHistory, (chunkText) => {
-                // Remove loading indicator on first chunk
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) {
-                    loadingEl.remove();
-                    // create empty message box
-                    aiMsgBox = addMessage('', 'ai', false, true);
-                }
-                if (aiMsgBox) {
-                    currentAiText += chunkText;
-                    aiMsgBox.contentDiv.innerHTML = renderMarkdownWithMath(currentAiText);
-                    scrollToBottom();
-                }
-            }, currentAbortController.signal);
+            if (providerType === 'ollama') {
+                // Temporarily set the Ollama model name
+                config.modelName = modelId || config.modelName;
+                responseText = await fetchOllama(chatHistory, (chunkText) => {
+                    if (document.getElementById(loadingId)) {
+                        document.getElementById(loadingId).remove();
+                        aiMsgBox = appendMessage('assistant', '', false, true);
+                    }
+                    if (aiMsgBox) {
+                        currentAiText += chunkText;
+                        aiMsgBox.contentDiv.innerHTML = renderMarkdownWithMath(currentAiText);
+                        scrollToBottom();
+                    }
+                }, currentAbortController.signal);
+            } else if (isCerebras) {
+                responseText = await fetchCerebras(modelId, chatHistory, (chunkText) => {
+                    if (!aiMsgBox) {
+                        if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                        aiMsgBox = appendMessage('assistant', '', false, true);
+                    }
+                    if (aiMsgBox) {
+                        currentAiText += chunkText;
+                        aiMsgBox.contentDiv.innerHTML = renderMarkdownWithMath(currentAiText);
+                        scrollToBottom();
+                    }
+                }, currentAbortController.signal);
+            } else {
+                responseText = await fetchGemini(modelId, chatHistory, currentAbortController.signal);
+                if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                aiMsgBox = appendMessage('assistant', renderMarkdownWithMath(responseText), false, true);
+            }
 
             if (!aiMsgBox) {
-                // fallback if no chunks streamed
-                document.getElementById(loadingId).remove();
-                addMessage(renderMarkdownWithMath(responseText), 'ai', false, true);
+                const fallback = document.getElementById(loadingId);
+                if (fallback) fallback.remove();
+                appendMessage('assistant', renderMarkdownWithMath(responseText), false, true);
             }
 
             chatHistory.push({ role: 'assistant', content: responseText });
-
+            saveChatMessage('assistant', responseText);
         } catch (error) {
             console.error('API Error:', error);
             const loadEl = document.getElementById(loadingId);
             if (loadEl) loadEl.remove();
-
             if (error.name === 'AbortError') {
-                addMessage('*(Generation Stopped)*', 'ai', false, true);
+                appendMessage('assistant', '*(Generation Stopped)*', false, true);
             } else {
-                addMessage('Error connecting to the API: ' + error.message, 'ai', true);
-                // Optionally remove the last user message from history if it failed
+                appendMessage('assistant', '⚠️ Error: ' + error.message, true, false);
                 chatHistory.pop();
             }
         } finally {
             setGeneratingState(false);
             currentAbortController = null;
-            messageInput.focus();
+            dom.messageInput.focus();
         }
     });
 
-    function addMessage(text, sender, isError = false, isHtml = false) {
+    // ── Message Rendering ───────────────────────────────────────────────────
+    function appendMessage(sender, text, isError = false, isHtml = false) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${sender}`;
 
@@ -325,238 +298,343 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = `msg-content ${isError ? 'error' : ''}`;
-
-        if (isHtml) {
-            contentDiv.innerHTML = text;
-        } else {
-            contentDiv.textContent = text;
-        }
+        if (isHtml) { contentDiv.innerHTML = text; } else { contentDiv.textContent = text; }
 
         msgDiv.appendChild(avatarDiv);
         msgDiv.appendChild(contentDiv);
-
-        messageList.appendChild(msgDiv);
-        scrollToBottom(true); // force scroll slightly on new main message adding
-
+        dom.messageList.appendChild(msgDiv);
+        scrollToBottom(true);
         return { msgDiv, contentDiv };
     }
 
     function addLoadingIndicator() {
         const id = 'loading-' + Date.now();
         const msgDiv = document.createElement('div');
-        msgDiv.className = `message ai`;
+        msgDiv.className = 'message ai';
         msgDiv.id = id;
-
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'msg-avatar';
         avatarDiv.innerHTML = "<i class='bx bx-brain'></i>";
-
         const contentDiv = document.createElement('div');
         contentDiv.className = 'msg-content';
-        contentDiv.innerHTML = `
-            <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        `;
-
+        contentDiv.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
         msgDiv.appendChild(avatarDiv);
         msgDiv.appendChild(contentDiv);
-
-        messageList.appendChild(msgDiv);
+        dom.messageList.appendChild(msgDiv);
         scrollToBottom();
         return id;
     }
 
-    function scrollToBottom(force = false) {
-        if (!isUserScrolledUp || force) {
-            chatWindow.scrollTo({
-                top: chatWindow.scrollHeight,
-                behavior: force ? 'smooth' : 'auto'
-            });
-        }
-    }
-
-    // Connect to Ollama API
+    // ── Ollama API ──────────────────────────────────────────────────────────
     async function fetchOllama(messages, onChunk, signal) {
-        // Construct the chat endpoint. 
-        // Some users might input 'https://xyz.ngrok.app' or 'https://xyz.ngrok.app/api'
-        let endpoint = config.apiUrl;
-        if (!endpoint.endsWith('/api/chat') && !endpoint.endsWith('/api/generate')) {
-            // Assume base URL was provided, append /api/chat
-            endpoint = `${endpoint}/api/chat`;
-        }
-
-        const payload = {
-            model: config.modelName,
-            messages: messages,
-            stream: true // Using streaming
-        };
-
+        let endpoint = `${config.dbApiUrl}/api/chat/ollama`;
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload),
-            signal: signal
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('ananta_token') || ''}` },
+            body: JSON.stringify({ model: config.modelName, messages, stream: true }),
+            signal
         });
+        if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
 
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullResponse = '', buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const parsed = JSON.parse(line);
+                    const textStr = (parsed.message && parsed.message.content) ? parsed.message.content : (parsed.response || '');
+                    if (textStr) { fullResponse += textStr; onChunk(textStr); }
+                } catch (e) { /* fragmented line, skip */ }
+            }
+        }
+        if (buffer.trim()) {
+            try {
+                const parsed = JSON.parse(buffer);
+                const textStr = (parsed.message && parsed.message.content) ? parsed.message.content : (parsed.response || '');
+                if (textStr) { fullResponse += textStr; onChunk(textStr); }
+            } catch (e) { /* ignore */ }
+        }
+        return fullResponse;
+    }
+
+    // ── Cerebras API (OpenAI-compatible) ────────────────────────────────────
+    async function fetchCerebras(modelId, messages, onChunk, signal) {
+        const url = `${config.dbApiUrl}/api/chat/cerebras`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('ananta_token') || ''}` },
+            body: JSON.stringify({
+                model: modelId,
+                messages: messages.map(m => ({ role: m.role, content: m.content })),
+                stream: true
+            }),
+            signal
+        });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `Cerebras error ${response.status}`);
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let fullResponse = '';
+        let buffer = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // keep the last incomplete line
             for (const line of lines) {
-                if (line.trim() !== '') {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed === 'data: [DONE]') continue;
+                if (trimmed.startsWith('data: ')) {
                     try {
-                        const parsed = JSON.parse(line);
-                        let textStr = '';
-                        // Ollama /api/chat returns { message: { role: 'assistant', content: '...' } }
-                        if (parsed.message && parsed.message.content) {
-                            textStr = parsed.message.content;
-                        } else if (parsed.response) { // fallback for /api/generate
-                            textStr = parsed.response;
+                        const parsed = JSON.parse(trimmed.slice(6));
+                        const content = parsed.choices?.[0]?.delta?.content || '';
+                        if (content) {
+                            fullResponse += content;
+                            onChunk(content);
                         }
-
-                        if (textStr) {
-                            fullResponse += textStr;
-                            onChunk(textStr);
-                        }
-                    } catch (e) {
-                        // Some chunks might be split, or just keep going
-                        console.error('Error parsing stream line:', line);
-                    }
+                    } catch (e) { /* partially formed JSON, skip */ }
                 }
             }
         }
-
         return fullResponse;
     }
 
-    // Restore user session
+    async function fetchGemini(modelId, messages, signal) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${config.geminiKey}`;
+
+        const contents = messages.map(msg => ({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+        }));
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents }),
+            signal
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData?.error?.message || `Gemini error ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || '(No response from Gemini)';
+    }
+
+    // ── Chat History Save ───────────────────────────────────────────────────
+    async function saveChatMessage(role, content) {
+        const token = localStorage.getItem('ananta_token');
+        if (!token) return;
+        try {
+            const response = await fetch(`${config.dbApiUrl}/api/history/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ role, content, conversation_id: conversationId })
+            });
+            const data = await response.json();
+            if (data.conversation_id && !conversationId) {
+                conversationId = data.conversation_id;
+                loadConversations();
+            }
+        } catch (e) {
+            console.error('Failed to save message to history:', e);
+        }
+    }
+
+    // ── Session Restore ─────────────────────────────────────────────────────
+    async function generateDynamicWelcomeMessage(username) {
+        const welcomeEl = document.getElementById('welcome-text');
+        if (!welcomeEl) return;
+        
+        let dots = 0;
+        let isConnecting = true;
+        let fetchingComplete = false;
+        let bufferedChars = [];
+        let displayedText = '';
+        
+        const connectingInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            welcomeEl.innerHTML = `<span style="color:var(--text-secondary);font-size:0.8em;font-weight:400;">Waking up Qwen${'.'.repeat(dots)}</span><span class="cursor-blink"></span>`;
+        }, 400);
+
+        const typeCharInterval = setInterval(() => {
+            if (bufferedChars.length > 0) {
+                if (isConnecting) {
+                    clearInterval(connectingInterval);
+                    isConnecting = false;
+                }
+                displayedText += bufferedChars.shift();
+                welcomeEl.innerHTML = displayedText + '<span class="cursor-blink"></span>';
+            } else if (fetchingComplete) {
+                clearInterval(typeCharInterval);
+                setTimeout(() => {
+                    welcomeEl.innerHTML = displayedText;
+                }, 2000);
+            }
+        }, 45); // 45ms per character creates a realistic typing cadence
+
+        try {
+            await fetchCerebras('qwen-3-235b-a22b-instruct-2507', [
+                { role: 'system', content: `You are Ananta, a helpful AI teacher. Greet the user named ${username} with a very short (max 5 words), friendly, welcoming sentence. Do not use quotes.` }
+            ], (chunk) => {
+                for (let char of chunk) {
+                    bufferedChars.push(char);
+                }
+            });
+            if (isConnecting) clearInterval(connectingInterval);
+            fetchingComplete = true;
+        } catch (e) {
+            clearInterval(connectingInterval);
+            clearInterval(typeCharInterval);
+            welcomeEl.innerHTML = `Welcome back, ${username}!`;
+        }
+    }
+
     function restoreUserSession() {
-        const savedName = localStorage.getItem('semar_user_name');
-        const savedPic = localStorage.getItem('semar_user_pic');
-        if (savedName && savedPic) {
-            const welcomeText = document.getElementById('welcome-text');
-            if (welcomeText) welcomeText.textContent = 'Welcome back, ' + savedName + '!';
+        const token = localStorage.getItem('ananta_token');
+        if (token) {
+            const username = localStorage.getItem('ananta_username') || 'User';
+            const avatar   = localStorage.getItem('ananta_avatar');
+            // Ananta cyan fallback avatar
+            const avatarSrc = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=00e5ff&color=000&bold=true`;
 
-            const profileImg = document.getElementById('user-profile-img');
-            if (profileImg) {
-                profileImg.src = savedPic;
-                profileImg.classList.remove('hidden');
+            if (dom.userProfileImg) { 
+                dom.userProfileImg.src = avatarSrc; 
+                dom.userProfileImg.classList.remove('hidden'); 
             }
-
-            const loginContainer = document.getElementById('google-login-container');
-            if (loginContainer) loginContainer.classList.add('hidden');
+            if (dom.userInfoSidebar) { 
+                dom.userAvatarSidebar.src = avatarSrc; 
+                dom.usernameSidebar.textContent = username; 
+                dom.userInfoSidebar.classList.remove('hidden'); 
+            }
+            if (dom.loginContainer) dom.loginContainer.classList.add('hidden');
+            
+            generateDynamicWelcomeMessage(username);
+            loadConversations();
+        } else {
+            if (dom.loginContainer) dom.loginContainer.classList.remove('hidden');
+            if (dom.userInfoSidebar) dom.userInfoSidebar.classList.add('hidden');
+            if (dom.userProfileImg)  dom.userProfileImg.classList.add('hidden');
         }
     }
 
-    restoreUserSession();
+    // ── Conversations ───────────────────────────────────────────────────────
+    async function loadConversations() {
+        const token = localStorage.getItem('ananta_token');
+        if (!token) return;
+        try {
+            const response = await fetch(`${config.dbApiUrl}/api/conversations`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await response.json();
+            if (data.conversations) renderConversationList(data.conversations);
+        } catch (error) { console.error('Error loading conversations:', error); }
+    }
 
-    // Logout logic
-    const profileImg = document.getElementById('user-profile-img');
-    const logoutMenu = document.getElementById('logout-menu');
-    const logoutBtn = document.getElementById('logout-btn');
-
-    if (profileImg && logoutMenu) {
-        profileImg.addEventListener('click', (e) => {
-            e.stopPropagation();
-            logoutMenu.classList.toggle('hidden');
+    function renderConversationList(conversations) {
+        dom.conversationList.innerHTML = '';
+        conversations.forEach(conv => {
+            const item = document.createElement('div');
+            item.className = `conversation-item ${conversationId == conv.id ? 'active' : ''}`;
+            item.innerHTML = `<i class='bx bx-message-detail'></i><span>${conv.title}</span><button class="icon-btn delete-conv-btn" data-id="${conv.id}"><i class='bx bx-trash'></i></button>`;
+            item.addEventListener('click', (e) => { if (!e.target.closest('.delete-conv-btn')) loadChatHistory(conv.id); });
+            item.querySelector('.delete-conv-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm('Delete this chat?')) await deleteConversation(conv.id);
+            });
+            dom.conversationList.appendChild(item);
         });
     }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('semar_user_name');
-            localStorage.removeItem('semar_user_pic');
-            location.reload();
-        });
+    async function deleteConversation(id) {
+        const token = localStorage.getItem('ananta_token');
+        try {
+            await fetch(`${config.dbApiUrl}/api/conversations/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (id === conversationId) startNewChat();
+            loadConversations();
+        } catch (error) { console.error('Error deleting conversation:', error); }
     }
 
-    // Hide dropdown when clicking outside
+    async function loadChatHistory(id) {
+        const token = localStorage.getItem('ananta_token');
+        if (!token || !id) return;
+        conversationId = id;
+        try {
+            const response = await fetch(`${config.dbApiUrl}/api/history/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await response.json();
+            if (data.history) {
+                chatHistory = data.history.map(m => ({ role: m.role, content: m.content }));
+                dom.messageList.innerHTML = '';
+                data.history.forEach(msg => {
+                    const isAi = msg.role === 'assistant';
+                    appendMessage(msg.role, isAi ? renderMarkdownWithMath(msg.content) : msg.content, false, isAi);
+                });
+                dom.appContainer.classList.add('chat-started');
+                document.body.classList.add('chat-active');
+                loadConversations();
+            }
+        } catch (error) { console.error('Error loading history:', error); }
+        if (window.innerWidth <= 768) toggleSidebar(false);
+    }
+
+    // ── Sidebar ─────────────────────────────────────────────────────────────
+    function toggleSidebar(forcedState) {
+        isSidebarOpen = (forcedState !== undefined) ? forcedState : !isSidebarOpen;
+        if (window.innerWidth <= 768) {
+            dom.sidebar.classList.toggle('mobile-open', isSidebarOpen);
+        } else {
+            dom.sidebar.classList.toggle('collapsed', !isSidebarOpen);
+        }
+    }
+
+    function startNewChat() {
+        conversationId = null;
+        chatHistory    = [];
+        dom.messageList.innerHTML = '';
+        dom.appContainer.classList.remove('chat-started');
+        document.body.classList.remove('chat-active');
+        document.querySelectorAll('.conversation-item').forEach(item => item.classList.remove('active'));
+        if (window.innerWidth <= 768) toggleSidebar(false);
+    }
+
+    // ── Bind Events ─────────────────────────────────────────────────────────
+    dom.sidebarToggle.addEventListener('click', () => toggleSidebar());
+    if (dom.sidebarToggleClose) dom.sidebarToggleClose.addEventListener('click', () => toggleSidebar(false));
+    dom.newChatBtn.addEventListener('click', startNewChat);
+
+    if (dom.userProfileImg) dom.userProfileImg.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dom.logoutMenu.classList.toggle('hidden');
+    });
+
+    if (dom.logoutBtn) dom.logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('ananta_token');
+        localStorage.removeItem('ananta_username');
+        localStorage.removeItem('ananta_avatar');
+        location.reload();
+    });
+
     document.addEventListener('click', (e) => {
-        if (logoutMenu && !logoutMenu.classList.contains('hidden')) {
-            if (!logoutMenu.contains(e.target) && !profileImg.contains(e.target)) {
-                logoutMenu.classList.add('hidden');
+        if (dom.logoutMenu && !dom.logoutMenu.classList.contains('hidden')) {
+            if (!dom.profileDropdownWrapper || !dom.profileDropdownWrapper.contains(e.target)) {
+                dom.logoutMenu.classList.add('hidden');
             }
         }
     });
 
+    // ── Init ────────────────────────────────────────────────────────────────
+    restoreUserSession();
 });
-
-// Google Identity Services - JWT Decoder
-function decodeJwtResponse(token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-}
-
-// Global callback for Google Login
-window.handleCredentialResponse = function (response) {
-    const responsePayload = decodeJwtResponse(response.credential);
-    const userName = responsePayload.name;
-    const userPicture = responsePayload.picture;
-
-    // Save to local storage
-    localStorage.setItem('semar_user_name', userName);
-    localStorage.setItem('semar_user_pic', userPicture);
-
-    // Update welcome message
-    const welcomeText = document.getElementById('welcome-text');
-    if (welcomeText) {
-        welcomeText.textContent = 'Welcome back, ' + userName + '!';
-    }
-
-    // Update profile image
-    const profileImg = document.getElementById('user-profile-img');
-    if (profileImg) {
-        profileImg.src = userPicture;
-        profileImg.classList.remove('hidden');
-    }
-
-    // Hide login button
-    const loginContainer = document.getElementById('google-login-container');
-    if (loginContainer) {
-        loginContainer.classList.add('hidden');
-    }
-};
-
-// Global initializer called when Google Identity script loads
-window.onload = function () {
-    google.accounts.id.initialize({
-        client_id: "884444108567-k7n8527kckobjcdj1fdr8kob4d961qnl.apps.googleusercontent.com",
-        callback: window.handleCredentialResponse
-    });
-
-    const loginContainer = document.getElementById('google-login-container');
-    if (loginContainer && !localStorage.getItem('semar_user_name')) {
-        google.accounts.id.renderButton(
-            loginContainer,
-            { theme: "outline", size: "large", type: "standard", shape: "rectangular", text: "signin_with", logo_alignment: "left" }
-        );
-    }
-
-    // Only prompt One Tap if the user is NOT already continuously logged in via our local session
-    if (!localStorage.getItem('semar_user_name')) {
-        // Wait briefly for the UI to settle before throwing the popup
-        setTimeout(() => {
-            google.accounts.id.prompt();
-        }, 300);
-    }
-};
