@@ -1209,7 +1209,30 @@ body.chat-active .circle-3 {
 /* Responsive */
 @media (max-width: 768px) {
 
-    /* Sidebar Mobile */
+    /* Use dynamic viewport height so the layout accounts for the Android
+       virtual keyboard appearing / disappearing */
+    body {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .app-layout {
+        height: 100dvh;
+    }
+
+    /* Prevent iOS from auto-zooming inputs */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+
+    /* Disable the snake-glow animation on mobile — it causes reflow jitter
+       while the keyboard is open */
+    #chat-form:hover::before {
+        animation: none;
+        opacity: 0;
+    }
+
+    /* Sidebar Mobile — slide-in overlay */
     .sidebar {
         position: fixed;
         left: 0;
@@ -1232,9 +1255,9 @@ body.chat-active .circle-3 {
         justify-content: space-between;
     }
 
-    /* Header Polish */
+    /* Header */
     .chat-header {
-        padding: 0.6rem 0.6rem;
+        padding: 0.55rem 0.75rem;
     }
 
     .logo-container {
@@ -1248,13 +1271,21 @@ body.chat-active .circle-3 {
     }
 
     #user-profile-img {
-        width: 28px;
-        height: 28px;
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Bigger tap target for all icon buttons on mobile */
+    .icon-btn {
+        padding: 0.6rem;
+        font-size: 1.5rem;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     /* Welcome Section */
     .welcome-section {
-        top: 12vh;
+        top: 10vh;
     }
 
     .welcome-section h2 {
@@ -1269,7 +1300,7 @@ body.chat-active .circle-3 {
 
     /* Chat Content */
     .message-list {
-        padding: 1.2rem 0.8rem 90px 0.8rem;
+        padding: 1rem 0.75rem 100px 0.75rem;
         gap: 1.2rem;
     }
 
@@ -1284,7 +1315,7 @@ body.chat-active .circle-3 {
     }
 
     .user .msg-content {
-        padding: 0.6rem 1rem;
+        padding: 0.65rem 1rem;
         border-radius: 16px;
         border-bottom-right-radius: 4px;
     }
@@ -1294,34 +1325,39 @@ body.chat-active .circle-3 {
         font-size: 0.85rem;
     }
 
-    /* Input Area */
+    /* Input Area — stays at bottom, expands up with content */
     .chat-input-area {
-        padding: 0.5rem 0.8rem 1rem 0.8rem;
+        padding: 0.6rem 0.75rem env(safe-area-inset-bottom, 0.75rem) 0.75rem;
+        /* env() adds clearance for iPhone home-bar & Android nav bar */
     }
 
     .app-container:not(.chat-started) .chat-input-area {
-        transform: translateY(calc(-35vh + 3rem));
+        transform: translateY(calc(-32dvh + 3rem));
     }
 
     #chat-form {
-        border-radius: 20px;
-        padding: 0.4rem 0.4rem 0.4rem 1rem;
+        border-radius: 22px;
+        padding: 0.45rem 0.45rem 0.45rem 1rem;
+        gap: 0.5rem;
     }
 
     #message-input {
-        font-size: 0.95rem;
-        padding: 0.5rem 0;
+        font-size: 1rem; /* 1rem = 16px — prevents iOS auto-zoom on focus */
+        padding: 0.55rem 0;
+        max-height: 140px; /* Limit growth more aggressively on small screens */
+        line-height: 1.45;
     }
 
     .send-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 1.1rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.15rem;
+        /* Slightly larger tap target */
     }
 
     .footer-note {
         font-size: 0.65rem;
-        margin-top: 0.5rem;
+        margin-top: 0.4rem;
         margin-bottom: 0;
         padding: 0 0.5rem;
     }
@@ -1330,7 +1366,9 @@ body.chat-active .circle-3 {
     .modal {
         padding: 1.5rem;
         width: 95%;
-        border-radius: 12px;
+        border-radius: 14px;
+        max-height: 85dvh;
+        overflow-y: auto;
     }
 
     .modal-header h2 {
@@ -1339,12 +1377,34 @@ body.chat-active .circle-3 {
 
     .form-group input,
     .form-group select {
-        padding: 0.6rem 0.8rem;
-        font-size: 0.95rem;
+        padding: 0.65rem 0.9rem;
+        font-size: 1rem;
     }
 
     .primary-btn {
-        padding: 0.7rem;
+        padding: 0.75rem;
         font-size: 0.95rem;
     }
+
+    /* Slightly larger model-cards for easier touch */
+    .model-card {
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Delete button on conversations — always visible on mobile (no hover) */
+    .conversation-item .delete-conv-btn {
+        opacity: 0.6;
+    }
 }
+
+/* Extra-small phones (< 380px) */
+@media (max-width: 380px) {
+    .welcome-section h2 {
+        font-size: 1.35rem;
+    }
+    .chat-header h1 {
+        display: none; /* hide title text, keep logo */
+    }
+}
+
