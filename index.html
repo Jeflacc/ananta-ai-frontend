@@ -88,7 +88,15 @@
             </main>
 
             <footer class="chat-input-area">
+                <div id="image-preview-container" class="hidden">
+                    <img id="image-preview" src="" alt="Preview">
+                    <button type="button" id="remove-image-btn"><i class='bx bx-x'></i></button>
+                </div>
                 <form id="chat-form">
+                    <label for="image-upload" class="upload-btn" title="Attach Image">
+                        <i class='bx bx-image-add'></i>
+                    </label>
+                    <input type="file" id="image-upload" accept="image/*" class="hidden">
                     <textarea id="message-input" placeholder="Message ANANTA..." rows="1"></textarea>
                     <button type="submit" id="send-btn" class="send-btn">
                         <i class='bx bx-send'></i>

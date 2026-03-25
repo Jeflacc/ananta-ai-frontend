@@ -60,28 +60,57 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutMenu: document.getElementById('logout-menu'),
         logoutBtn: document.getElementById('logout-btn'),
         profileDropdownWrapper: document.querySelector('.profile-dropdown-wrapper'),
-        appContainer: document.querySelector('.app-container')
+        appContainer: document.querySelector('.app-container'),
+        imageUpload: document.getElementById('image-upload'),
+        imagePreviewContainer: document.getElementById('image-preview-container'),
+        imagePreview: document.getElementById('image-preview'),
+        removeImageBtn: document.getElementById('remove-image-btn')
     };
 
 
     const config = {
-        dbApiUrl:       (typeof CONFIG !== 'undefined' && CONFIG.DB_API_URL)       ? CONFIG.DB_API_URL       : 'http://localhost:3000',
-        modelName:      localStorage.getItem('ananta_model_name') || 'semar:latest'
+        dbApiUrl: (typeof CONFIG !== 'undefined' && CONFIG.DB_API_URL) ? CONFIG.DB_API_URL : 'http://localhost:3000',
+        modelName: localStorage.getItem('ananta_model_name') || 'semar:latest'
     };
 
 
     let conversationId = null;
-    let isSidebarOpen  = true;
-    let chatHistory    = [];
-    let isGenerating   = false;
+    let isSidebarOpen = true;
+    let chatHistory = [];
+    let isGenerating = false;
     let currentAbortController = null;
-    let isUserScrolledUp       = false;
+    let isUserScrolledUp = false;
 
 
     let activeProvider = localStorage.getItem('ananta_active_provider') || 'cerebras::llama3.1-8b';
 
 
     let pendingProviderSelection = activeProvider;
+
+    let currentAttachedImage = null;
+
+    if (dom.imageUpload) {
+        dom.imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentAttachedImage = event.target.result;
+                dom.imagePreview.src = currentAttachedImage;
+                dom.imagePreviewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (dom.removeImageBtn) {
+        dom.removeImageBtn.addEventListener('click', () => {
+            currentAttachedImage = null;
+            dom.imageUpload.value = '';
+            dom.imagePreviewContainer.classList.add('hidden');
+        });
+    }
 
     function renderModelCard(container, icon, name, value) {
         const card = document.createElement('div');
@@ -115,12 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(`${config.dbApiUrl}/api/tags`).catch(() => ({ json: () => ({ models: [] }) })),
                 fetch(`${config.dbApiUrl}/api/models`).catch(() => ({ json: () => ({ cerebras: [], gemini: [] }) }))
             ]);
-            
+
             const data = await tagsRes.json();
             const semarModels = (data.models || []).filter(m => m.name.toLowerCase().includes('semar'));
             if (semarModels.length > 0) {
                 semarModels.forEach(m => {
-                    const label = m.name.replace(':latest','').split('-').map(p => p[0].toUpperCase()+p.slice(1)).join(' ');
+                    const label = m.name.replace(':latest', '').split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' ');
                     renderModelCard(dom.semarGroup, '🤖', label, `ollama::${m.name}`);
                 });
             } else {
@@ -128,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const extraModels = await modelsRes.json();
-            
+
 
             if (extraModels.cerebras && extraModels.cerebras.length > 0) {
                 extraModels.cerebras.forEach(m => {
@@ -146,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     dom.closeModalBtn.addEventListener('click', () => dom.settingsModal.classList.add('hidden'));
     dom.settingsModal.addEventListener('click', (e) => { if (e.target === dom.settingsModal) dom.settingsModal.classList.add('hidden'); });
-    
+
     dom.saveSettingsBtn.addEventListener('click', () => {
         activeProvider = pendingProviderSelection;
         localStorage.setItem('ananta_active_provider', activeProvider);
@@ -214,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    
+
 
 
     dom.chatForm.addEventListener('submit', async (e) => {
@@ -226,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const text = dom.messageInput.value.trim();
-        if (!text) return;
+        if (!text && !currentAttachedImage) return;
 
 
         document.body.classList.add('chat-active');
@@ -236,9 +265,28 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.messageInput.style.height = 'auto';
         dom.sendBtn.disabled = true;
 
-        appendMessage('user', text, false, false);
-        chatHistory.push({ role: 'user', content: text });
-        saveChatMessage('user', text);
+        let displayMessage = text;
+        if (currentAttachedImage) {
+            displayMessage += (text ? '<br>' : '') + `<img src="${currentAttachedImage}" alt="Uploaded Image">`;
+        }
+        appendMessage('user', displayMessage, false, true);
+
+        let newHistoryItem = { role: 'user', content: text };
+        if (currentAttachedImage) {
+            newHistoryItem.content = [
+                { type: 'text', text: text || "What's in this image?" },
+                { type: 'image_url', image_url: { url: currentAttachedImage } }
+            ];
+        }
+        chatHistory.push(newHistoryItem);
+        saveChatMessage('user', text + (currentAttachedImage ? " [Image Attached]" : ""));
+
+        const sentImage = currentAttachedImage;
+        currentAttachedImage = null;
+        if (dom.imageUpload) {
+            dom.imageUpload.value = '';
+            dom.imagePreviewContainer.classList.add('hidden');
+        }
 
         setGeneratingState(true);
         const loadingId = addLoadingIndicator();
@@ -253,7 +301,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const [providerType, modelId] = activeProvider.split('::');
             const isCerebras = providerType === 'cerebras';
 
-            if (providerType === 'ollama') {
+            if (sentImage) {
+                responseText = await fetchOpenRouter(config.dbApiUrl, chatHistory, (chunkText) => {
+                    if (document.getElementById(loadingId)) {
+                        document.getElementById(loadingId).remove();
+                        aiMsgBox = appendMessage('assistant', '', false, true);
+                    }
+                    if (aiMsgBox) {
+                        currentAiText += chunkText;
+                        aiMsgBox.contentDiv.innerHTML = renderMarkdownWithMath(currentAiText);
+                        scrollToBottom();
+                    }
+                }, currentAbortController.signal);
+            } else if (providerType === 'ollama') {
 
                 config.modelName = modelId || config.modelName;
                 responseText = await fetchOllama(chatHistory, (chunkText) => {
@@ -296,6 +356,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.name === 'AbortError') {
                 appendMessage('assistant', '*(Generation Stopped)*', false, true);
             } else if (error.message === 'login_required') {
+                chatHistory.pop();
+            } else if (error.message === 'rate_limited') {
+                showRateLimitPopup();
+                chatHistory.pop();
+            } else if (error.message === 'content_too_large') {
+                showSizeLimitPopup();
                 chatHistory.pop();
             } else {
                 appendMessage('assistant', '⚠️ Error: ' + error.message, true, false);
@@ -351,6 +417,77 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(popup);
     }
 
+    function showRateLimitPopup() {
+        const existing = document.getElementById('rate-limit-popup');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'rate-limit-popup';
+        popup.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+            animation: fadeIn 0.2s ease;
+        `;
+        popup.innerHTML = `
+            <div style="
+                background: var(--glass-bg, rgba(20,20,30,0.95));
+                border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+                border-radius: 20px; padding: 32px 28px;
+                max-width: 380px; width: 90%; text-align: center;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            ">
+                <div style="font-size:2.5rem; margin-bottom:12px;">⏳</div>
+                <h3 style="font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:700; color:var(--text-primary,#fff); margin:0 0 10px;">Service Unavailable</h3>
+                <p style="color:var(--text-secondary,#aaa); font-size:0.9rem; margin:0 0 24px; line-height:1.5;">we're sorry, image upload isnt available right now.</p>
+                <div style="display:flex; justify-content:center;">
+                    <button onclick="document.getElementById('rate-limit-popup').remove()" style="
+                        padding:10px 20px; border-radius:10px; border:none;
+                        background:var(--primary-color,#00e5ff); color:#000; font-weight:700;
+                        cursor:pointer; font-family:'Inter',sans-serif; font-size:0.9rem;
+                    ">Got it</button>
+                </div>
+            </div>
+        `;
+        popup.addEventListener('click', (e) => { if (e.target === popup) popup.remove(); });
+        document.body.appendChild(popup);
+    }
+
+    function showSizeLimitPopup() {
+        const existing = document.getElementById('size-limit-popup');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'size-limit-popup';
+        popup.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+            animation: fadeIn 0.2s ease;
+        `;
+        popup.innerHTML = `
+            <div style="
+                background: var(--glass-bg, rgba(20,20,30,0.95));
+                border: 1px solid var(--border-color, rgba(255,255,255,0.12));
+                border-radius: 20px; padding: 32px 28px;
+                max-width: 380px; width: 90%; text-align: center;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            ">
+                <div style="font-size:2.5rem; margin-bottom:12px;">📈</div>
+                <h3 style="font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:700; color:var(--text-primary,#fff); margin:0 0 10px;">File Too Large</h3>
+                <p style="color:var(--text-secondary,#aaa); font-size:0.9rem; margin:0 0 24px; line-height:1.5;">The image you selected is too large to process. Please try uploading a smaller image.</p>
+                <div style="display:flex; justify-content:center;">
+                    <button onclick="document.getElementById('size-limit-popup').remove()" style="
+                        padding:10px 20px; border-radius:10px; border:none;
+                        background:var(--primary-color,#00e5ff); color:#000; font-weight:700;
+                        cursor:pointer; font-family:'Inter',sans-serif; font-size:0.9rem;
+                    ">Got it</button>
+                </div>
+            </div>
+        `;
+        popup.addEventListener('click', (e) => { if (e.target === popup) popup.remove(); });
+        document.body.appendChild(popup);
+    }
 
     function appendMessage(sender, text, isError = false, isHtml = false) {
         const msgDiv = document.createElement('div');
@@ -488,6 +625,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return fullResponse;
     }
 
+    async function fetchOpenRouter(apiUrl, messages, onChunk, signal) {
+        const url = `${apiUrl}/api/chat/openrouter`;
+        const payloadMessages = [
+            ...(typeof CONFIG !== 'undefined' && CONFIG.SYSTEM_PROMPT ? [{ role: 'system', content: CONFIG.SYSTEM_PROMPT }] : []),
+            ...messages
+        ];
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('ananta_token') || ''}` },
+            body: JSON.stringify({
+                model: 'nvidia/nemotron-nano-12b-v2-vl:free',
+                messages: payloadMessages,
+                stream: true
+            }),
+            signal
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) { showLoginRequiredPopup(); throw new Error('login_required'); }
+            if (response.status === 429) { throw new Error('rate_limited'); }
+            if (response.status === 413) { throw new Error('content_too_large'); }
+            const errText = await response.text();
+            throw new Error(`OpenRouter error ${response.status}: ${errText}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullResponse = '';
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed === 'data: [DONE]') continue;
+                if (trimmed.startsWith('data: ')) {
+                    try {
+                        const parsed = JSON.parse(trimmed.slice(6));
+                        const content = parsed.choices?.[0]?.delta?.content || '';
+                        if (content) {
+                            fullResponse += content;
+                            onChunk(content);
+                        }
+                    } catch (e) { }
+                }
+            }
+        }
+        return fullResponse;
+    }
+
 
     async function saveChatMessage(role, content) {
         const token = localStorage.getItem('ananta_token');
@@ -512,13 +704,13 @@ document.addEventListener('DOMContentLoaded', () => {
     async function generateDynamicWelcomeMessage(username) {
         const welcomeEl = document.getElementById('welcome-text');
         if (!welcomeEl) return;
-        
+
         let dots = 0;
         let isConnecting = true;
         let fetchingComplete = false;
         let bufferedChars = [];
         let displayedText = '';
-        
+
         const connectingInterval = setInterval(() => {
             dots = (dots + 1) % 4;
             welcomeEl.innerHTML = `<span style="color:var(--text-secondary);font-size:0.8em;font-weight:400;">Waking up Qwen${'.'.repeat(dots)}</span><span class="cursor-blink"></span>`;
@@ -561,27 +753,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('ananta_token');
         if (token) {
             const username = localStorage.getItem('ananta_username') || 'User';
-            const avatar   = localStorage.getItem('ananta_avatar');
-            
+            const avatar = localStorage.getItem('ananta_avatar');
+
             const avatarSrc = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=00e5ff&color=000&bold=true`;
 
-            if (dom.userProfileImg) { 
-                dom.userProfileImg.src = avatarSrc; 
-                dom.userProfileImg.classList.remove('hidden'); 
+            if (dom.userProfileImg) {
+                dom.userProfileImg.src = avatarSrc;
+                dom.userProfileImg.classList.remove('hidden');
             }
-            if (dom.userInfoSidebar) { 
-                dom.userAvatarSidebar.src = avatarSrc; 
-                dom.usernameSidebar.textContent = username; 
-                dom.userInfoSidebar.classList.remove('hidden'); 
+            if (dom.userInfoSidebar) {
+                dom.userAvatarSidebar.src = avatarSrc;
+                dom.usernameSidebar.textContent = username;
+                dom.userInfoSidebar.classList.remove('hidden');
             }
             if (dom.loginContainer) dom.loginContainer.classList.add('hidden');
-            
+
             generateDynamicWelcomeMessage(username);
             loadConversations();
         } else {
             if (dom.loginContainer) dom.loginContainer.classList.remove('hidden');
             if (dom.userInfoSidebar) dom.userInfoSidebar.classList.add('hidden');
-            if (dom.userProfileImg)  dom.userProfileImg.classList.add('hidden');
+            if (dom.userProfileImg) dom.userProfileImg.classList.add('hidden');
         }
     }
 
@@ -654,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startNewChat() {
         conversationId = null;
-        chatHistory    = [];
+        chatHistory = [];
         dom.messageList.innerHTML = '';
         dom.appContainer.classList.remove('chat-started');
         document.body.classList.remove('chat-active');

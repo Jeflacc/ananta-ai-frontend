@@ -919,6 +919,70 @@ body.chat-active .circle-3 {
     }
 }
 
+#image-preview-container {
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 0.8rem;
+    position: relative;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+}
+
+#image-preview {
+    max-height: 100px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+#remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 75, 75, 0.9);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.upload-btn {
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    align-self: flex-end;
+    margin-bottom: 0.15rem;
+}
+
+.upload-btn:hover {
+    color: var(--primary-color);
+    background: rgba(0, 229, 255, 0.1);
+}
+
+.message.user .msg-content img {
+    max-width: 280px;
+    max-height: 195px;
+    object-fit: contain;
+    border-radius: 12px;
+    margin-top: 8px;
+    display: block;
+}
+
 #message-input {
     flex: 1;
     background: transparent;
@@ -1228,7 +1292,9 @@ body.chat-active .circle-3 {
     }
 
 
-    input, textarea, select {
+    input,
+    textarea,
+    select {
         font-size: 16px !important;
     }
 
@@ -1403,7 +1469,3 @@ body.chat-active .circle-3 {
         opacity: 0.6;
     }
 }
-
-
-
-
