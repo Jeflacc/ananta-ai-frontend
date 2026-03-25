@@ -8,7 +8,7 @@
     --primary-hover: #00b8cc;
     --secondary-color: #76FF03;
     --user-msg-bg: #374151;
-    /* Dark gray for user */
+
     --ai-msg-bg: transparent;
     --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -41,14 +41,14 @@ body {
     height: 100dvh;
 }
 
-/* Background Dynamic Google-Style Orbs */
+
 .bg-shape {
     position: fixed;
     border-radius: 50%;
     filter: blur(50px);
-    /* Reduced blur makes the inner color strike harder */
+
     opacity: 0.95;
-    /* Huge opacity boost for maximum noticeability */
+
     z-index: 0;
     pointer-events: none;
     transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -56,7 +56,7 @@ body {
 
 .circle-1 {
     width: 60vw;
-    /* Larger */
+
     height: 60vw;
     background: radial-gradient(circle at center, rgba(0, 229, 255, 0.15) 0%, transparent 60%);
     top: -5vh;
@@ -82,7 +82,7 @@ body {
     animation: float3 6s infinite alternate ease-in-out;
 }
 
-/* Focused state when chat begins */
+
 body.chat-active .bg-shape {
     opacity: 0.15;
     filter: blur(60px);
@@ -112,7 +112,7 @@ body.chat-active .circle-3 {
         transform: translate(25vw, 20vh) scale(1.1);
     }
 
-    /* Giant sweeps */
+
 }
 
 @keyframes float2 {
@@ -135,7 +135,7 @@ body.chat-active .circle-3 {
     }
 }
 
-/* Layout */
+
 .app-layout {
     display: flex;
     width: 100vw;
@@ -145,7 +145,7 @@ body.chat-active .circle-3 {
     z-index: 1;
 }
 
-/* App Container */
+
 .app-container {
     flex: 1;
     height: 100%;
@@ -157,7 +157,7 @@ body.chat-active .circle-3 {
     overflow: hidden;
 }
 
-/* Header */
+
 .chat-header {
     display: flex;
     justify-content: space-between;
@@ -250,7 +250,7 @@ body.chat-active .circle-3 {
     box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
 }
 
-/* Sidebar Styling */
+
 .sidebar {
     width: 260px;
     height: 100%;
@@ -388,7 +388,7 @@ body.chat-active .circle-3 {
     display: none;
 }
 
-/* Chat Area */
+
 .chat-window {
     flex: 1;
     overflow-y: auto;
@@ -397,10 +397,10 @@ body.chat-active .circle-3 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overscroll-behavior: contain; /* prevents page bounce while scrolling messages */
+
 }
 
-/* Custom Scrollbar */
+
 .chat-window::-webkit-scrollbar {
     width: 8px;
 }
@@ -418,7 +418,7 @@ body.chat-active .circle-3 {
     background: #BDBDBD;
 }
 
-/* Welcome Section */
+
 .welcome-section {
     position: absolute;
     top: 18vh;
@@ -428,7 +428,7 @@ body.chat-active .circle-3 {
     text-align: center;
     padding: 0 1rem;
     z-index: 5;
-    /* Default animated state when chat IS started */
+
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, -40px);
@@ -436,7 +436,7 @@ body.chat-active .circle-3 {
 }
 
 .app-container:not(.chat-started) .welcome-section {
-    /* Centered initial state */
+
     opacity: 1;
     pointer-events: auto;
     transform: translate(-50%, 0);
@@ -465,7 +465,7 @@ body.chat-active .circle-3 {
     margin-bottom: 2rem;
 }
 
-/* Model Picker */
+
 .model-picker {
     margin-top: 0.5rem;
 }
@@ -537,7 +537,7 @@ body.chat-active .circle-3 {
     font-size: 0.85rem !important;
 }
 
-/* User Profile (Google Auth) */
+
 .user-profile-container {
     display: flex;
     flex-direction: column;
@@ -630,14 +630,14 @@ body.chat-active .circle-3 {
     display: none !important;
 }
 
-/* Message List */
+
 .message-list {
     width: 100%;
     max-width: 800px;
     display: flex;
     flex-direction: column;
     padding: 2rem 1rem 80px 1rem;
-    /* Pad bottom so scrolled messages clear the input overlay completely */
+
     gap: 1.8rem;
 }
 
@@ -673,7 +673,7 @@ body.chat-active .circle-3 {
     background: transparent;
     color: transparent;
     display: none;
-    /* ChatGPT style hides user avatar */
+
 }
 
 .ai .msg-avatar {
@@ -699,11 +699,11 @@ body.chat-active .circle-3 {
 .ai .msg-content {
     background: var(--ai-msg-bg);
     width: 100%;
-    /* Override pre-wrap to prevent large gaps around block elements */
+
     white-space: normal;
 }
 
-/* Markdown Specifics */
+
 .ai .msg-content p {
     margin-bottom: 0.75rem;
 }
@@ -758,7 +758,7 @@ body.chat-active .circle-3 {
     color: #ef4444;
 }
 
-/* Loading Dots */
+
 .typing-indicator {
     display: flex;
     gap: 4px;
@@ -789,7 +789,7 @@ body.chat-active .circle-3 {
     }
 }
 
-/* Input Area */
+
 .chat-input-area {
     width: 100%;
     padding: 0.5rem 1rem 1.5rem 1rem;
@@ -799,7 +799,7 @@ body.chat-active .circle-3 {
     position: relative;
     z-index: 20;
 
-    /* Default frosted glass state for active chat */
+
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -809,7 +809,7 @@ body.chat-active .circle-3 {
     transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Cursor Blink Typography Animation */
+
 .cursor-blink {
     display: inline-block;
     width: 0.45em;
@@ -834,7 +834,7 @@ body.chat-active .circle-3 {
 }
 
 .app-container:not(.chat-started) .chat-input-area {
-    /* Initially fully transparent over the giant background orbs */
+
     background: transparent;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -853,18 +853,18 @@ body.chat-active .circle-3 {
     position: relative;
     z-index: 1;
     overflow: hidden;
-    /* clips the spinning glow to the border */
-    /* Contains the spinning background */
+
+
 }
 
 
 
-/* Background that covers the center, revealing only the border */
+
 #chat-form::after {
     content: '';
     position: absolute;
     inset: 2px;
-    /* Border thickness */
+
     background: var(--bg-panel);
     border-radius: 26px;
     z-index: -1;
@@ -877,17 +877,17 @@ body.chat-active .circle-3 {
     box-shadow: var(--shadow-sm);
 }
 
-/* The spinning glowing line */
+
 #chat-form::before {
     content: '';
     position: absolute;
     width: 2500px;
-    /* Perfect huge square ensures mathematical rotation */
+
     height: 2500px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(0deg);
-    /* Thin bright arc — looks like a single line circling the border */
+
     background: conic-gradient(from 0deg, transparent 94%, rgba(0, 229, 255, 0.6) 96.5%, rgba(0, 229, 255, 1) 98%, rgba(0, 229, 255, 0.6) 99.5%, transparent 100%);
     z-index: -2;
     opacity: 0;
@@ -930,11 +930,11 @@ body.chat-active .circle-3 {
     max-height: 200px;
     min-height: 24px;
     line-height: 1.5;
-    overflow-y: hidden; /* JS controls height, no internal scroll */
+
     overscroll-behavior: contain;
 }
 
-/* Hide the textarea scrollbar completely — it auto-expands instead */
+
 #message-input::-webkit-scrollbar {
     display: none;
 }
@@ -970,10 +970,10 @@ body.chat-active .circle-3 {
     transform: scale(1.05);
 }
 
-/* Stop Button State */
+
 .send-btn.stop-btn {
     background: #ef4444;
-    /* Red color for stop */
+
     animation: pulse 2s infinite ease-in-out;
 }
 
@@ -1013,7 +1013,7 @@ body.chat-active .circle-3 {
     margin-bottom: 0.5rem;
 }
 
-/* Modal */
+
 .modal-overlay {
     position: absolute;
     top: 0;
@@ -1145,7 +1145,7 @@ body.chat-active .circle-3 {
     box-shadow: 0 4px 10px rgba(0, 229, 255, 0.3);
 }
 
-/* ── Model Card Picker (Settings Modal) ─────────────────────── */
+
 .model-card-section {
     margin-bottom: 1.2rem;
 }
@@ -1214,11 +1214,10 @@ body.chat-active .circle-3 {
     font-style: italic;
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
 
-    /* Use dynamic viewport height so the layout accounts for the Android
-       virtual keyboard appearing / disappearing */
+
     body {
         height: 100dvh;
         overflow: hidden;
@@ -1228,19 +1227,18 @@ body.chat-active .circle-3 {
         height: 100dvh;
     }
 
-    /* Prevent iOS from auto-zooming inputs */
+
     input, textarea, select {
         font-size: 16px !important;
     }
 
-    /* Disable the snake-glow animation on mobile — it causes reflow jitter
-       while the keyboard is open */
+
     #chat-form:hover::before {
         animation: none;
         opacity: 0;
     }
 
-    /* Sidebar Mobile — slide-in overlay */
+
     .sidebar {
         position: fixed;
         left: 0;
@@ -1263,7 +1261,7 @@ body.chat-active .circle-3 {
         justify-content: space-between;
     }
 
-    /* Header */
+
     .chat-header {
         padding: 0.55rem 0.75rem;
     }
@@ -1283,7 +1281,7 @@ body.chat-active .circle-3 {
         height: 30px;
     }
 
-    /* Bigger tap target for all icon buttons on mobile */
+
     .icon-btn {
         padding: 0.6rem;
         font-size: 1.5rem;
@@ -1291,7 +1289,7 @@ body.chat-active .circle-3 {
         min-height: 44px;
     }
 
-    /* Welcome Section */
+
     .welcome-section {
         top: 10vh;
     }
@@ -1306,7 +1304,7 @@ body.chat-active .circle-3 {
         margin-bottom: 1.5rem;
     }
 
-    /* Chat Content */
+
     .message-list {
         padding: 1rem 0.75rem 100px 0.75rem;
         gap: 1.2rem;
@@ -1333,10 +1331,10 @@ body.chat-active .circle-3 {
         font-size: 0.85rem;
     }
 
-    /* Input Area — stays at bottom, expands up with content */
+
     .chat-input-area {
         padding: 0.6rem 0.75rem env(safe-area-inset-bottom, 0.75rem) 0.75rem;
-        /* env() adds clearance for iPhone home-bar & Android nav bar */
+
     }
 
     .app-container:not(.chat-started) .chat-input-area {
@@ -1350,9 +1348,9 @@ body.chat-active .circle-3 {
     }
 
     #message-input {
-        font-size: 1rem; /* 1rem = 16px — prevents iOS auto-zoom on focus */
+
         padding: 0.55rem 0;
-        max-height: 140px; /* Limit growth more aggressively on small screens */
+
         line-height: 1.45;
     }
 
@@ -1360,7 +1358,7 @@ body.chat-active .circle-3 {
         width: 38px;
         height: 38px;
         font-size: 1.15rem;
-        /* Slightly larger tap target */
+
     }
 
     .footer-note {
@@ -1370,7 +1368,7 @@ body.chat-active .circle-3 {
         padding: 0 0.5rem;
     }
 
-    /* Modal */
+
     .modal {
         padding: 1.5rem;
         width: 95%;
@@ -1394,25 +1392,18 @@ body.chat-active .circle-3 {
         font-size: 0.95rem;
     }
 
-    /* Slightly larger model-cards for easier touch */
+
     .model-card {
         padding: 0.85rem 1rem;
         font-size: 0.95rem;
     }
 
-    /* Delete button on conversations — always visible on mobile (no hover) */
+
     .conversation-item .delete-conv-btn {
         opacity: 0.6;
     }
 }
 
-/* Extra-small phones (< 380px) */
-@media (max-width: 380px) {
-    .welcome-section h2 {
-        font-size: 1.35rem;
-    }
-    .chat-header h1 {
-        display: none; /* hide title text, keep logo */
-    }
-}
+
+
 

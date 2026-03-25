@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Configure Marked.js
     if (typeof marked !== 'undefined') {
         marked.setOptions({ breaks: true, gfm: true });
     }
 
-    // ── Markdown + Math Renderer ────────────────────────────────────────────
+
     function renderMarkdownWithMath(text) {
         if (!text) return '';
         let mathBlocks = [];
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // ── DOM References ──────────────────────────────────────────────────────
+
     const dom = {
         chatWindow: document.getElementById('chat-window'),
         messageList: document.getElementById('message-list'),
@@ -64,13 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         appContainer: document.querySelector('.app-container')
     };
 
-    // ── Config ──────────────────────────────────────────────────────────────
+
     const config = {
         dbApiUrl:       (typeof CONFIG !== 'undefined' && CONFIG.DB_API_URL)       ? CONFIG.DB_API_URL       : 'http://localhost:3000',
         modelName:      localStorage.getItem('ananta_model_name') || 'semar:latest'
     };
 
-    // ── State ───────────────────────────────────────────────────────────────
+
     let conversationId = null;
     let isSidebarOpen  = true;
     let chatHistory    = [];
@@ -78,10 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAbortController = null;
     let isUserScrolledUp       = false;
 
-    // activeProvider holds the currently selected model
+
     let activeProvider = localStorage.getItem('ananta_active_provider') || 'cerebras::llama3.1-8b';
 
-    // ── Settings: populate model cards on open ──────────────────────────────
+
     let pendingProviderSelection = activeProvider;
 
     function renderModelCard(container, icon, name, value) {
@@ -97,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         card.addEventListener('click', () => {
             pendingProviderSelection = value;
-            // Update UI selection state within the modal
+
             document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
         });
@@ -107,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function populateProviderSelect() {
         if (!dom.semarGroup) return;
 
-        pendingProviderSelection = activeProvider; // reset to actual active when opening modal
+        pendingProviderSelection = activeProvider;
         dom.semarGroup.innerHTML = '';
         dom.cerebrasGroup.innerHTML = '';
 
@@ -130,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const extraModels = await modelsRes.json();
             
-            // Fill Cerebras group
+
             if (extraModels.cerebras && extraModels.cerebras.length > 0) {
                 extraModels.cerebras.forEach(m => {
                     renderModelCard(dom.cerebrasGroup, '⚡', m.name, `cerebras::${m.id}`);
@@ -155,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // ── Auto-scroll ─────────────────────────────────────────────────────────
+
     dom.chatWindow.addEventListener('scroll', () => {
         const maxScrollTop = dom.chatWindow.scrollHeight - dom.chatWindow.clientHeight;
         isUserScrolledUp = (maxScrollTop - dom.chatWindow.scrollTop) > 50;
@@ -167,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Generate State ──────────────────────────────────────────────────────
+
     function setGeneratingState(generating) {
         isGenerating = generating;
         if (generating) {
@@ -181,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Input resize ────────────────────────────────────────────────────────
+
     dom.messageInput.addEventListener('input', function () {
         this.style.height = 'auto';
         const maxH = window.innerWidth <= 768 ? 120 : 200;
@@ -190,16 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.sendBtn.disabled = this.value.trim() === '' && !isGenerating;
     });
 
-    // Scroll input into view when keyboard opens on mobile
+
     dom.messageInput.addEventListener('focus', () => {
         if (window.innerWidth <= 768) {
             setTimeout(() => {
                 dom.messageInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 350); // delay lets the keyboard fully open first
+            }, 350);
         }
     });
 
-    // Also react to keyboard closing/opening (causes window resize on Android)
+
     window.addEventListener('resize', () => {
         if (window.innerWidth <= 768 && document.activeElement === dom.messageInput) {
             setTimeout(() => {
@@ -217,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
 
-    // ── Chat Submit ─────────────────────────────────────────────────────────
+
     dom.chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -229,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = dom.messageInput.value.trim();
         if (!text) return;
 
-        // First message — lock in the provider and hide the picker
+
         document.body.classList.add('chat-active');
         dom.appContainer.classList.add('chat-started');
 
@@ -250,12 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let responseText = '';
 
         try {
-            // Determine provider from value format: "prefix::id"
+
             const [providerType, modelId] = activeProvider.split('::');
             const isCerebras = providerType === 'cerebras';
 
             if (providerType === 'ollama') {
-                // Temporarily set the Ollama model name
+
                 config.modelName = modelId || config.modelName;
                 responseText = await fetchOllama(chatHistory, (chunkText) => {
                     if (document.getElementById(loadingId)) {
@@ -297,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.name === 'AbortError') {
                 appendMessage('assistant', '*(Generation Stopped)*', false, true);
             } else if (error.message === 'login_required') {
-                chatHistory.pop(); // silently discard — popup already shown
+                chatHistory.pop();
             } else {
                 appendMessage('assistant', '⚠️ Error: ' + error.message, true, false);
                 chatHistory.pop();
@@ -309,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Login Required Popup ────────────────────────────────────────────────
+
     function showLoginRequiredPopup() {
         const existing = document.getElementById('login-required-popup');
         if (existing) existing.remove();
@@ -352,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(popup);
     }
 
-    // ── Message Rendering ───────────────────────────────────────────────────
+
     function appendMessage(sender, text, isError = false, isHtml = false) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${sender}`;
@@ -390,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return id;
     }
 
-    // ── Ollama API ──────────────────────────────────────────────────────────
+
     async function fetchOllama(messages, onChunk, signal) {
         let endpoint = `${config.dbApiUrl}/api/chat/ollama`;
         const payloadMessages = [
@@ -424,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const parsed = JSON.parse(line);
                     const textStr = (parsed.message && parsed.message.content) ? parsed.message.content : (parsed.response || '');
                     if (textStr) { fullResponse += textStr; onChunk(textStr); }
-                } catch (e) { /* fragmented line, skip */ }
+                } catch (e) { }
             }
         }
         if (buffer.trim()) {
@@ -432,12 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const parsed = JSON.parse(buffer);
                 const textStr = (parsed.message && parsed.message.content) ? parsed.message.content : (parsed.response || '');
                 if (textStr) { fullResponse += textStr; onChunk(textStr); }
-            } catch (e) { /* ignore */ }
+            } catch (e) { }
         }
         return fullResponse;
     }
 
-    // ── Cerebras API (OpenAI-compatible) ────────────────────────────────────
+
     async function fetchCerebras(modelId, messages, onChunk, signal) {
         const url = `${config.dbApiUrl}/api/chat/cerebras`;
         const payloadMessages = [
@@ -470,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop(); // keep the last incomplete line
+            buffer = lines.pop();
             for (const line of lines) {
                 const trimmed = line.trim();
                 if (!trimmed || trimmed === 'data: [DONE]') continue;
@@ -482,14 +481,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             fullResponse += content;
                             onChunk(content);
                         }
-                    } catch (e) { /* partially formed JSON, skip */ }
+                    } catch (e) { }
                 }
             }
         }
         return fullResponse;
     }
 
-    // ── Chat History Save ───────────────────────────────────────────────────
+
     async function saveChatMessage(role, content) {
         const token = localStorage.getItem('ananta_token');
         if (!token) return;
@@ -509,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Session Restore ─────────────────────────────────────────────────────
+
     async function generateDynamicWelcomeMessage(username) {
         const welcomeEl = document.getElementById('welcome-text');
         if (!welcomeEl) return;
@@ -539,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     welcomeEl.innerHTML = displayedText;
                 }, 2000);
             }
-        }, 45); // 45ms per character creates a realistic typing cadence
+        }, 45);
 
         try {
             await fetchCerebras('qwen-3-235b-a22b-instruct-2507', [
@@ -563,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (token) {
             const username = localStorage.getItem('ananta_username') || 'User';
             const avatar   = localStorage.getItem('ananta_avatar');
-            // Ananta cyan fallback avatar
+            
             const avatarSrc = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=00e5ff&color=000&bold=true`;
 
             if (dom.userProfileImg) { 
@@ -586,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Conversations ───────────────────────────────────────────────────────
+
     async function loadConversations() {
         const token = localStorage.getItem('ananta_token');
         if (!token) return;
@@ -643,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth <= 768) toggleSidebar(false);
     }
 
-    // ── Sidebar ─────────────────────────────────────────────────────────────
+
     function toggleSidebar(forcedState) {
         isSidebarOpen = (forcedState !== undefined) ? forcedState : !isSidebarOpen;
         if (window.innerWidth <= 768) {
@@ -663,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth <= 768) toggleSidebar(false);
     }
 
-    // ── Bind Events ─────────────────────────────────────────────────────────
+
     dom.sidebarToggle.addEventListener('click', () => toggleSidebar());
     if (dom.sidebarToggleClose) dom.sidebarToggleClose.addEventListener('click', () => toggleSidebar(false));
     dom.newChatBtn.addEventListener('click', startNewChat);
@@ -688,6 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Init ────────────────────────────────────────────────────────────────
+
     restoreUserSession();
 });

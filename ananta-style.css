@@ -1,25 +1,23 @@
-/* =========================================================================
-   ANANTA - CORE DESIGN SYSTEM & REWRITE
-   ========================================================================= */
+
 
 :root {
-    /* Material Dark Theme */
+
     --bg-color: #111827;
     --bg-surface: #1f2937;
     --text-main: #f0f6fc;
     --text-muted: #8b949e;
 
-    /* Orbital System - Responsive Radii */
+
     --r1: 22vmin;
     --r2: 40vmin;
     --r3: 58vmin;
 
-    /* Theme Accents (Neon & Glass) */
+
     --accent-cyan: #00E5FF;
     --accent-lime: #76FF03;
     --accent-yellow: #FFD600;
 
-    /* Utilities */
+
     --color-green: #58CC02;
     --color-green-dark: #58A700;
     --color-blue: #1CB0F6;
@@ -54,7 +52,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: var(--font-body);
-    /* Prevent text size adjustment on orientation change */
+
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
 }
@@ -88,7 +86,7 @@ h4,
     z-index: 300;
 }
 
-/* Colors & Fill */
+
 .text-cyan {
     color: var(--accent-cyan);
 }
@@ -123,7 +121,7 @@ h4,
 
 .bg-teal { background-color: var(--color-teal); color: #fff; }
 
-/* ── 3D Planet Gradients ── */
+
 .planet-earth { background: radial-gradient(circle at 30% 30%, #4facfe 0%, #00f2fe 60%, #0077b6 100%); box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), inset 2px 2px 8px rgba(255,255,255,0.4); }
 .planet-mars { background: radial-gradient(circle at 30% 30%, #ff7e5f 0%, #feb47b 60%, #cc2b5e 100%); box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), inset 2px 2px 8px rgba(255,255,255,0.4); }
 .planet-venus { background: radial-gradient(circle at 30% 30%, #f6d365 0%, #fda085 60%, #f39c12 100%); box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), inset 2px 2px 8px rgba(255,255,255,0.4); }
@@ -135,9 +133,7 @@ h4,
 
 .icon-fill { font-variation-settings: 'FILL' 1; }
 
-/* =========================================================================
-   ANIMATIONS & PHYSICS
-   ========================================================================= */
+
 @keyframes float-slow {
 
     0%,
@@ -237,7 +233,7 @@ h4,
     }
 }
 
-/* Comet Passing By */
+
 @keyframes comet-pass {
     0% {
         top: -10%;
@@ -329,7 +325,7 @@ h4,
     animation-delay: 0.3s;
 }
 
-/* Screens */
+
 .screen {
     position: absolute;
     inset: 0;
@@ -349,9 +345,7 @@ h4,
     transform: translateX(0);
 }
 
-/* =========================================================================
-   SCREEN 1: SPLASH
-   ========================================================================= */
+
 #splash-screen {
     justify-content: center;
     align-items: center;
@@ -425,9 +419,7 @@ h4,
     }
 }
 
-/* =========================================================================
-   GLOBAL LAYOUT (HEADER, SIDEBAR, BOTTOM NAV)
-   ========================================================================= */
+
 .top-header {
     position: fixed;
     top: 12px;
@@ -573,11 +565,9 @@ h4,
     display: none;
 }
 
-/* Mobile default */
 
-/* =========================================================================
-   CORE ARCHITECTURE: ORBITAL CONSTELLATION
-   ========================================================================= */
+
+
 .constellation-area {
     position: absolute;
     inset: 0;
@@ -589,14 +579,14 @@ h4,
 }
 
 .constellation-scroll {
-    /* Clamp to avoid going past safe edges on small screens */
+
     width: min(100vmin, 100svw, 100svh);
     height: min(100vmin, 100svw, 100svh);
     position: relative;
-    /* Centers everything perfectly */
+
 }
 
-/* Base Rings */
+
 .orbit-ring {
     position: absolute;
     top: 50%;
@@ -607,14 +597,14 @@ h4,
     transform-origin: center center;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    /* Let clicks pass to modules */
+
 }
 
 [data-theme="light"] .orbit-ring {
     border-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Ring Sizes & Rotations */
+
 .ring-1 {
     width: calc(var(--r1) * 2);
     height: calc(var(--r1) * 2);
@@ -635,7 +625,7 @@ h4,
 
 .module-island {
     position: absolute;
-    /* Centered on exact orbit point */
+
     transform: translate(-50%, -50%);
     width: clamp(3rem, 4.2vmin + 1.5vmax, 4.2rem);
     height: clamp(3rem, 4.2vmin + 1.5vmax, 4.2rem);
@@ -649,7 +639,7 @@ h4,
     cursor: pointer;
     pointer-events: auto;
     transition: filter 0.2s, box-shadow 0.2s;
-    /* Counter-rotate to stay upright while ring spins */
+
     animation: inherit;
     animation-direction: reverse;
     touch-action: manipulation;
@@ -694,11 +684,11 @@ h4,
     color: var(--text-main);
     backdrop-filter: blur(4px);
     border: 1px solid var(--glass-border);
-    /* Hide on very small screens to reduce clutter */
+
     display: block;
 }
 
-/* Sun Core */
+
 .sun-core {
     position: absolute;
     top: 50%;
@@ -723,7 +713,7 @@ h4,
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
-/* ── Ask Ananta Companion (Static near Solar System) ── */
+
 .comet-chatbot {
     position: absolute;
     bottom: 5vmin;
@@ -781,9 +771,7 @@ h4,
     border-radius: 2px;
 }
 
-/* =========================================================================
-   SECONDARY SCREENS (Detail, Theory, Tools, Profile)
-   ========================================================================= */
+
 .page-header {
     padding: 20px 24px;
     display: flex;
@@ -825,7 +813,7 @@ h4,
     padding-bottom: 100px;
 }
 
-/* Cards */
+
 .module-list {
     display: flex;
     flex-direction: column;
@@ -961,7 +949,7 @@ h4,
     font-size: 0.95rem;
 }
 
-/* Theory */
+
 .clean-theory-content {
     line-height: 1.7;
     font-size: 1.05rem;
@@ -1048,7 +1036,7 @@ h4,
     box-shadow: 0 0 0 var(--color-green-dark);
 }
 
-/* Tools */
+
 .tools-grid {
     display: grid;
     gap: 20px;
@@ -1147,7 +1135,7 @@ h4,
     font-weight: 600;
 }
 
-/* Profile ID Card */
+
 .profile-content {
     align-items: center;
 }
@@ -1327,7 +1315,7 @@ h4,
     letter-spacing: 2px;
 }
 
-/* Horizontal ID Card Layout */
+
 .id-card.horizontal {
     flex-direction: row;
     width: 100%;
@@ -1375,7 +1363,7 @@ h4,
 .id-card.horizontal .id-barcode {
     margin-top: 8px;
 }
-/* Settings & Achievement Cards */
+
 .settings-card {
     background: var(--bg-surface);
     border: 1px solid var(--glass-border);
@@ -1537,7 +1525,7 @@ h4,
     cursor: pointer;
 }
 
-/* Overlays */
+
 .overlay {
     position: fixed;
     inset: 0;
@@ -1602,7 +1590,7 @@ h4,
     font-size: 36px;
 }
 
-/* FAB */
+
 .ask-ananta-fab {
     position: absolute;
     bottom: 100px;
@@ -1642,9 +1630,7 @@ h4,
     border: 1px solid var(--glass-border);
 }
 
-/* =========================================================================
-   PROFILE ENHANCEMENTS
-   ========================================================================= */
+
 .profile-layout {
     display: flex;
     flex-direction: column;
@@ -1773,10 +1759,8 @@ h4,
     font-size: 18px;
 }
 
-/* =========================================================================
-   FUNCTIONAL SCREENS (Phase 9)
-   ========================================================================= */
-/* Quiz Tabs */
+
+
 .custom-tabs-header {
     flex-wrap: nowrap;
 }
@@ -1805,7 +1789,7 @@ h4,
     box-shadow: var(--shadow-sm);
 }
 
-/* Quiz Drill-Down */
+
 .drill-down-container {
     position: relative;
     overflow-x: hidden;
@@ -1832,7 +1816,7 @@ h4,
     margin: 0;
 }
 
-/* Folders */
+
 .folder-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -1870,7 +1854,7 @@ h4,
     font-weight: 600;
 }
 
-/* Materials List */
+
 .material-list { display: flex; flex-direction: column; gap: 12px; }
 .material-row {
     display: flex; align-items: center; gap: 16px;
@@ -1884,7 +1868,7 @@ h4,
 .material-row:hover { background: rgba(255,255,255,0.05); }
 .material-row .chevron { margin-left: auto; color: var(--text-muted); }
 
-/* Flashcard List */
+
 .fc-list { display: flex; flex-direction: column; gap: 16px; }
 .fc-deck {
     display: flex;
@@ -1903,7 +1887,7 @@ h4,
 .fc-deck-info h3 { margin: 0 0 4px; font-size: 1rem; }
 .fc-deck-info p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
 
-/* FAB Create */
+
 .fab-create {
     position: absolute;
     bottom: 24px; right: 24px;
@@ -1921,7 +1905,7 @@ h4,
 }
 .fab-create:hover { transform: scale(1.05); }
 
-/* Schedule Timeline */
+
 .calendar-header {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px;
@@ -1945,15 +1929,13 @@ h4,
 .event-card h4 { margin: 0 0 4px; font-size: 1rem; }
 .event-card p { margin: 0; font-size: 0.8rem; opacity: 0.8; }
 
-/* Dynamic Backgrounds */
+
 .bg-green { background: var(--color-green); }
 .bg-blue { background: var(--color-blue); }
 .bg-orange { background: var(--color-orange); }
 .bg-purple { background: var(--color-purple); }
 
-/* =========================================================================
-   RESPONSIVE DESIGN (DESKTOP)
-   ========================================================================= */
+
 @media (min-width: 1024px) {
     .bottom-nav {
         display: none !important;
@@ -2024,7 +2006,7 @@ h4,
         font-weight: 700;
     }
 
-    /* Perfectly center header on screen (ignore sidebar) */
+
     .top-header {
         left: 50%;
         transform: translateX(-50%);
@@ -2035,7 +2017,7 @@ h4,
     }
 
 
-    /* Details Screen floating content */
+
     #ipa-detail,
     #teori-modul,
     #alat-belajar,
@@ -2075,7 +2057,7 @@ h4,
     }
 }
 
-/* ── Navigation Colorful Icons ── */
+
 #bnav-materi, #snav-materi { --nav-col: #1CB0F6; }
 #bnav-soal, #snav-soal { --nav-col: #58CC02; }
 #bnav-flashcard, #snav-flashcard { --nav-col: #FF9600; }
@@ -2128,9 +2110,7 @@ h4,
     }
 }
 
-/* =========================================================================
-   TABLET BREAKPOINT (640px – 1023px)
-   ========================================================================= */
+
 @media (min-width: 640px) and (max-width: 1023px) {
     :root {
         --r1: 20vmin;
@@ -2186,9 +2166,7 @@ h4,
     }
 }
 
-/* =========================================================================
-   SMALL MOBILE (max-width: 375px)
-   ========================================================================= */
+
 @media (max-width: 375px) {
     :root {
         --r1: 24vmin;
@@ -2238,9 +2216,7 @@ h4,
     }
 }
 
-/* =========================================================================
-   TOPIC LIST VIEW (Solar System → Topic Drill-Down Overlay)
-   ========================================================================= */
+
 #homescreen {
     overflow: hidden;
 }
@@ -2310,7 +2286,7 @@ h4,
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    /* Extra bottom padding for fixed mobile nav */
+
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
 }
 
@@ -2386,7 +2362,7 @@ h4,
     color: var(--text-muted);
 }
 
-/* Hide header & navs when topic list view is open */
+
 #homescreen:has(#topic-list-view.visible) .top-header,
 #homescreen:has(#topic-list-view.visible) .bottom-nav,
 #homescreen:has(#topic-list-view.visible) .sidebar-nav {
@@ -2418,11 +2394,9 @@ h4,
     font-size: 20px;
 }
 
-/* =========================================================================
-   ⭐ STAR-CARDS — FLASHCARD SYSTEM
-   ========================================================================= */
 
-/* Sub-view switching inside #flashcard-screen */
+
+
 .fc-sub {
     position: absolute;
     inset: 0;
@@ -2440,7 +2414,7 @@ h4,
     display: flex;
 }
 
-/* ── Library Header ── */
+
 .sc-header {
     display: flex;
     align-items: center;
@@ -2450,7 +2424,7 @@ h4,
 
 .sc-header .page-title { flex: 1; }
 
-/* ── Tabs ── */
+
 .sc-tabs {
     display: flex;
     gap: 8px;
@@ -2484,14 +2458,14 @@ h4,
 
 .sc-tab .material-symbols-rounded { font-size: 16px; }
 
-/* ── Tab Panels ── */
+
 .sc-tab-panel {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-/* ── Deck Grid ── */
+
 .deck-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -2503,7 +2477,7 @@ h4,
     .deck-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 
-/* The Card in the Library */
+
 .deck-card {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
@@ -2531,7 +2505,7 @@ h4,
     border-radius: 20px 20px 0 0;
 }
 
-/* Subject glow colors */
+
 .deck-card[data-subject="biologi"]::before, .deck-card[data-subject="biologi"] .deck-card-icon { background: var(--color-green); }
 .deck-card[data-subject="kimia"]::before, .deck-card[data-subject="kimia"] .deck-card-icon { background: var(--color-purple); }
 .deck-card[data-subject="fisika"]::before, .deck-card[data-subject="fisika"] .deck-card-icon { background: var(--color-blue); }
@@ -2602,7 +2576,7 @@ h4,
 .deck-card-play:hover { background: rgba(255,255,255,0.2); }
 .deck-card-play .material-symbols-rounded { font-size: 18px; }
 
-/* Custom deck edit button */
+
 .deck-card-edit {
     position: absolute;
     top: 12px;
@@ -2622,7 +2596,7 @@ h4,
 .deck-card-edit:hover { background: rgba(255,255,255,0.2); }
 .deck-card-edit .material-symbols-rounded { font-size: 16px; }
 
-/* Empty state */
+
 .sc-empty {
     display: flex;
     flex-direction: column;
@@ -2634,14 +2608,14 @@ h4,
     color: var(--text-main);
 }
 
-/* ── FAB ── */
+
 .sc-fab {
     position: absolute;
     bottom: 24px;
     right: 24px;
 }
 
-/* ── Study Screen ── */
+
 .sc-study-header {
     display: flex;
     align-items: center;
@@ -2679,7 +2653,7 @@ h4,
     font-weight: 700;
 }
 
-/* Timer Ring */
+
 .sc-timer-wrap { flex-shrink: 0; }
 
 .sc-timer-ring {
@@ -2721,7 +2695,7 @@ h4,
     color: var(--color-red);
 }
 
-/* Mode Pills */
+
 .sc-mode-pills {
     display: flex;
     gap: 8px;
@@ -2756,7 +2730,7 @@ h4,
 
 .sc-mode-pill .material-symbols-rounded { font-size: 14px; }
 
-/* Deck badge + title */
+
 .sc-deck-title-bar {
     display: flex;
     align-items: center;
@@ -2779,7 +2753,7 @@ h4,
     font-weight: 600;
 }
 
-/* ── 3D FLIP CARD ── */
+
 .sc-card-area {
     flex: 1;
     display: flex;
@@ -2857,7 +2831,7 @@ h4,
     overflow-y: auto;
 }
 
-/* Swipe hints */
+
 .sc-swipe-hint {
     position: absolute;
     top: 50%;
@@ -2895,7 +2869,7 @@ h4,
     text-align: center;
 }
 
-/* Rating Buttons */
+
 .sc-rating-btns {
     display: flex;
     gap: 16px;
@@ -2934,7 +2908,7 @@ h4,
 }
 .sc-easy:hover { background: rgba(88,204,2,0.15); border-color: var(--color-green); }
 
-/* Session Complete */
+
 .sc-complete {
     position: absolute;
     inset: 0;
@@ -2966,7 +2940,7 @@ h4,
     margin-top: 8px;
 }
 
-/* ── Editor Screen ── */
+
 .sc-editor-meta {
     display: flex;
     flex-direction: column;
@@ -3082,7 +3056,7 @@ h4,
     min-width: 140px;
 }
 
-/* ── Modal ── */
+
 .sc-modal-overlay {
     position: absolute;
     inset: 0;
@@ -3125,7 +3099,7 @@ h4,
 
 .sc-modal-header h3 { flex: 1; font-size: 1rem; }
 
-/* AI Preview */
+
 .sc-ai-preview {
     display: flex;
     flex-direction: column;
@@ -3151,7 +3125,7 @@ h4,
 .sc-ai-preview-item .q { font-weight: 700; color: var(--text-main); }
 .sc-ai-preview-item .a { color: var(--text-muted); }
 
-/* ── Stardust Drag & Drop Zone ── */
+
 .sd-drop-zone {
     display: flex;
     flex-direction: column;

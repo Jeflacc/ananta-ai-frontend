@@ -5,27 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ANANTA AI</title>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Boxicons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css?v=18">
-    <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 </head>
 
 <body>
-    <!-- Background Elements -->
     <div class="bg-shape circle-1"></div>
     <div class="bg-shape circle-2"></div>
     <div class="bg-shape circle-3"></div>
 
     <div class="app-layout">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <button id="new-chat-btn" class="new-chat-btn">
@@ -39,7 +34,6 @@
                 <div class="history-group">
                     <div class="history-label">Recent Chats</div>
                     <div id="conversation-list" class="conversation-list">
-                        <!-- Conversation items will appear here -->
                     </div>
                 </div>
             </div>
@@ -52,7 +46,6 @@
         </aside>
 
         <div class="app-container">
-            <!-- Header -->
             <header class="chat-header">
                 <div class="header-left">
                     <button id="sidebar-toggle" class="icon-btn" title="Toggle Sidebar">
@@ -84,20 +77,16 @@
                 </div>
             </header>
 
-            <!-- Welcome Section Overlay -->
             <div class="welcome-section" id="welcome-section">
                 <h2 id="welcome-text">Welcome to ANANTA.</h2>
                 <p>Your personal Teacher AI</p>
             </div>
 
-            <!-- Chat Area -->
             <main class="chat-window" id="chat-window">
                 <div class="message-list" id="message-list">
-                    <!-- Messages will appear here -->
                 </div>
             </main>
 
-            <!-- Input Area -->
             <footer class="chat-input-area">
                 <form id="chat-form">
                     <textarea id="message-input" placeholder="Message ANANTA..." rows="1"></textarea>
@@ -111,7 +100,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settings-modal" class="modal-overlay hidden">
         <div class="modal">
             <div class="modal-header">
@@ -129,7 +117,6 @@
                 <div class="model-card-section">
                     <div class="model-card-group-label">⚡ General Models</div>
                     <div class="model-card-list" id="cerebras-card-list">
-                        <!-- filled by JS -->
                     </div>
                 </div>
                 <button id="save-settings-btn" class="primary-btn">Save</button>
@@ -141,3 +128,4 @@
 </body>
 
 </html>
+html>
